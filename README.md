@@ -133,4 +133,4 @@ Le billet passe en "remboursé", le siège est libéré et redevient vendable, e
 Quelques zones restent ouvertes et méritent d'être tranchées avant le développement :
 
 - Délai limite de remboursement (jusqu'à la séance ? 24 h avant ?) et éventuels frais retenus
-- Nombre maximum de places par commande
+- Nombre maximum de places par commande"# projet_architecture_web" 
