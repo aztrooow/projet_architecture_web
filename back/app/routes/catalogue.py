@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.sse import EventSourceResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from .. import parametres, remplissage, verrous
 from ..models import Billet, Evenement, Film, Salle, Seance, Siege
@@ -66,7 +66,13 @@ async def programme(session: Session, jours: int = Query(7, ge=1, le=14)):
                 "prix_centimes": infos["prix_min_centimes"],
                 "vendus": infos["vendus"],
             }
-    return {"films": list(films.values()), "evenements": list(evenements.values())}
+    salles, fauteuils = (await session.execute(select(func.count(), func.coalesce(func.sum(Salle.capacite), 0)))).one()
+    return {
+        "films": list(films.values()),
+        "evenements": list(evenements.values()),
+        "salles": salles,
+        "fauteuils": fauteuils,
+    }
 
 
 @router.get("/films/{film_id}")
@@ -95,6 +101,24 @@ async def film(film_id: int, session: Session):
 @router.get("/categories")
 async def categories(session: Session):
     return [{"code": c.code, "libelle": c.libelle} for c in await categories_actives(session)]
+
+
+@router.get("/tarifs")
+async def grille_tarifaire(session: Session):
+    """Grille publique : le spectateur voit toutes les règles avant de choisir."""
+    evenements = {e.id: e.nom for e in await session.scalars(select(Evenement))}
+    regles = sorted(await regles_actives(session), key=lambda r: (r.priorite, r.prix_centimes))
+    return [
+        {
+            "libelle": r.libelle,
+            "prix_centimes": r.prix_centimes,
+            "jours": r.jours,
+            "type_production": r.type_production,
+            "categorie": r.categorie,
+            "evenement": evenements.get(r.evenement_id),
+        }
+        for r in regles
+    ]
 
 
 @router.get("/seances/{seance_id}")

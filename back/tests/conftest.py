@@ -45,7 +45,10 @@ async def client():
             yield c
 
 
-async def nouvelle_seance(film_titre: str = "Interstellar", jours: int = 2, evenement_id: int | None = None) -> int:
+FILM_EVENEMENT = "Terminator 2 : Le Jugement dernier"
+
+
+async def nouvelle_seance(film_titre: str = FILM_EVENEMENT, jours: int = 2, evenement_id: int | None = None) -> int:
     async with SessionLocal() as session:
         film = await session.scalar(select(Film).where(Film.titre == film_titre))
         salle = await session.scalar(select(Salle).order_by(Salle.id).limit(1))

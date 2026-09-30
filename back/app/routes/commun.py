@@ -27,6 +27,8 @@ def film_json(film: Film) -> dict:
         "synopsis": film.synopsis,
         "type_production": film.type_production,
         "couleur": film.couleur,
+        "affiche_url": film.affiche_url,
+        "image_url": film.image_url,
     }
 
 

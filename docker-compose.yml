@@ -3,7 +3,7 @@ name: cinetint
 x-secrets: &secrets
   SERVICE_TOKEN: ${SERVICE_TOKEN:-dev-service-token}
   JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-a-changer-en-production}
-  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
 
 services:
   front:
@@ -94,6 +94,7 @@ services:
       QR_GENERATOR_URL: http://qr-generator:8001
       SERVICE_TOKEN: ${SERVICE_TOKEN:-dev-service-token}
       DONNEES_DEMO: "false"
+      PROGRAMME_SOURCE: aucune
     depends_on:
       postgres:
         condition: service_healthy

@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select, text
 
-from . import remplissage, tarifs
+from . import programmation_cgr, remplissage, tarifs
 from .auth import hasher
 from .config import settings
 from .db import SessionLocal, engine
@@ -152,6 +152,7 @@ async def creer_comptes(session) -> None:
 
 
 async def creer_donnees_demo(session) -> None:
+    """Salles, grille tarifaire et évènement du samedi ; les films viennent de la programmation."""
     for nom, rangs, par_rang, allees in SALLES:
         salle = Salle(nom=nom, capacite=rangs * par_rang)
         session.add(salle)
@@ -161,7 +162,8 @@ async def creer_donnees_demo(session) -> None:
                 x = n - 1 + sum(1 for a in allees if n > a)
                 pmr = r == 0 and (n <= 2 or n > par_rang - 2)
                 session.add(Siege(salle_id=salle.id, rang=chr(ord("A") + r), numero=n, x=x, y=r, pmr=pmr))
-    session.add_all(Film(**f) for f in FILMS)
+    # le film de l'évènement est projeté en séance spéciale, hors programmation importée
+    session.add(Film(**FILMS[0]))
     evenement = Evenement(**EVENEMENT)
     session.add(evenement)
     session.add_all(Categorie(code=c, libelle=l, ordre=o) for c, l, o in CATEGORIES)
@@ -177,48 +179,83 @@ def arrondi(moment: datetime, minutes: int = 5) -> datetime:
     return moment.replace(second=0, microsecond=0)
 
 
-def creneaux(jour: date, films: list[Film], fin_avant: datetime | None = None):
+def creneaux(jour: date, films: list[Film]):
     """Séances successives d'une salle sur une journée, ménage compris entre deux films."""
     moment = datetime.combine(jour, time(10, 45), PARIS)
     i = 0
     while moment.time() <= time(22, 30) and moment.date() == jour:
         film = films[i % len(films)]
-        fin = moment + timedelta(minutes=film.duree_min)
-        if fin_avant and fin + timedelta(minutes=30) > fin_avant:
-            break
         yield moment, film
-        moment = arrondi(fin + timedelta(minutes=25))
+        moment = arrondi(moment + timedelta(minutes=film.duree_min + 25))
         i += 1
 
 
-async def programmer_jour(session, jour: date, films, salles, evenement) -> list[Seance]:
+async def programmer_evenements(session, jours: int) -> list[Seance]:
+    """Chaque samedi à 20h30, la plus grande salle accueille « Terminator grandeur nature »."""
+    evenement = await session.scalar(select(Evenement).order_by(Evenement.id).limit(1))
+    film = await session.scalar(select(Film).where(Film.titre == FILMS[0]["titre"]))
+    salle = await session.scalar(select(Salle).order_by(Salle.capacite.desc(), Salle.id).limit(1))
+    if not (evenement and film and salle):
+        return []
     nouvelles = []
-    rotation = jour.toordinal()
-    for k, salle in enumerate(salles):
-        paire = [films[(rotation + k) % len(films)], films[(rotation + k + 3) % len(films)]]
-        soiree = None
-        # le samedi soir, la plus grande salle accueille l'évènement
-        if evenement and k == 0 and jour.weekday() == 5:
-            soiree = datetime.combine(jour, time(20, 30), PARIS)
-            t2 = next(f for f in films if f.titre.startswith("Terminator"))
-            nouvelles.append(Seance(film_id=t2.id, salle_id=salle.id, debut=soiree, version="VF",
-                                    evenement_id=evenement.id))
-        for moment, film in creneaux(jour, paire, soiree):
-            # Parasite toujours en VO, et les soirées de la salle Gance en VOST
-            vost = film.titre == "Parasite" or (k == 5 and moment.hour >= 20 and "Amélie" not in film.titre)
-            nouvelles.append(Seance(film_id=film.id, salle_id=salle.id, debut=moment, version="VOST" if vost else "VF"))
+    aujourd_hui = datetime.now(PARIS).date()
+    for d in range(jours):
+        jour = aujourd_hui + timedelta(days=d)
+        if jour.weekday() != 5:
+            continue
+        soiree = datetime.combine(jour, time(20, 30), PARIS)
+        if not await session.scalar(select(Seance.id).where(Seance.evenement_id == evenement.id, Seance.debut == soiree)):
+            nouvelles.append(Seance(film_id=film.id, salle_id=salle.id, debut=soiree, evenement_id=evenement.id))
     session.add_all(nouvelles)
     await session.flush()
     return nouvelles
 
 
-async def simuler_ventes(session, seances: list[Seance]) -> None:
-    """Remplit une partie des salles pour que les plans ne soient pas vides à la démo."""
+async def programmation_fictive(session, jours: int) -> list[Seance]:
+    """Semaine générée avec des classiques, quand la programmation réelle est injoignable."""
+    if not await session.scalar(select(func.count()).select_from(Film).where(Film.titre == FILMS[1]["titre"])):
+        session.add_all(Film(**f) for f in FILMS[1:])
+        await session.flush()
+    films = list(await session.scalars(select(Film).where(Film.actif, Film.source_id.is_(None)).order_by(Film.id)))
+    films = [f for f in films if f.titre != FILMS[0]["titre"]]
+    salles = list(await session.scalars(select(Salle).order_by(Salle.capacite.desc(), Salle.id)))
+    minuit = datetime.combine(datetime.now(PARIS).date(), time(0), PARIS)
+    occupation = await programmation_cgr.occupation_actuelle(session, minuit, minuit + timedelta(days=jours))
+    nouvelles = []
+    for d in range(jours):
+        debut_jour = minuit + timedelta(days=d)
+        deja = await session.scalar(
+            select(func.count())
+            .select_from(Seance)
+            .where(Seance.debut >= debut_jour, Seance.debut < debut_jour + timedelta(days=1), Seance.evenement_id.is_(None))
+        )
+        if deja:
+            continue
+        rotation = debut_jour.toordinal()
+        for k, salle in enumerate(salles):
+            paire = [films[(rotation + k) % len(films)], films[(rotation + k + 3) % len(films)]]
+            for moment, film in creneaux(debut_jour.date(), paire):
+                fin = moment + timedelta(minutes=film.duree_min + 20)
+                if any(not (fin <= a or moment >= b) for a, b in occupation.get(salle.id, [])):
+                    continue
+                # Parasite toujours en VO, et les soirées de la dernière salle en VOST
+                vost = film.titre == "Parasite" or (k == 5 and moment.hour >= 20 and "Amélie" not in film.titre)
+                nouvelles.append(Seance(film_id=film.id, salle_id=salle.id, debut=moment, version="VOST" if vost else "VF"))
+    session.add_all(nouvelles)
+    await session.flush()
+    return nouvelles
+
+
+async def simuler_ventes(session, seances: dict[Seance, float | None]) -> None:
+    """Remplit les salles pour que les plans ne soient pas vides à la démo.
+
+    Pour une séance importée, on part du taux de remplissage réel annoncé par le CGR.
+    """
     regles_actives = list(await session.scalars(select(RegleTarifaire).where(RegleTarifaire.actif)))
     types = dict((await session.execute(select(Film.id, Film.type_production))).all())
     sieges_par_salle: dict[int, list[Siege]] = {}
     maintenant = datetime.now(PARIS)
-    for seance in seances:
+    for seance, taux_source in seances.items():
         if seance.salle_id not in sieges_par_salle:
             sieges_par_salle[seance.salle_id] = list(
                 await session.scalars(select(Siege).where(Siege.salle_id == seance.salle_id).order_by(Siege.y, Siege.x))
@@ -230,6 +267,8 @@ async def simuler_ventes(session, seances: list[Seance]) -> None:
         proximite = max(0.25, 1 - (local.date() - maintenant.date()).days / 8)
         if seance.evenement_id:
             taux = hasard.uniform(0.55, 0.8)
+        elif taux_source is not None:
+            taux = min(0.95, taux_source + hasard.uniform(0.02, 0.12) * proximite)
         elif local.weekday() >= 4 or local.hour >= 19:
             taux = hasard.uniform(0.25, 0.6) * proximite
         else:
@@ -242,6 +281,8 @@ async def simuler_ventes(session, seances: list[Seance]) -> None:
             for s in sieges[depart : depart + hasard.randint(1, 4)]:
                 if s.y == sieges[depart].y:
                     pris.add(s.id)
+        if not pris:
+            continue
         vendu_le = min(maintenant, seance.debut) - timedelta(hours=hasard.uniform(1, 150))
         deja_passee = seance.debut < maintenant
         billets = []
@@ -288,29 +329,30 @@ async def simuler_ventes(session, seances: list[Seance]) -> None:
 
 
 async def completer_programmation(jours: int = 8) -> None:
-    """Garantit une programmation sur les prochains jours (idempotent)."""
+    """Évènements du samedi, puis programmation réelle (ou fictive en secours). Idempotent."""
     async with SessionLocal() as session:
         await session.execute(text("SELECT pg_advisory_xact_lock(:v)"), {"v": VERROU_INIT + 1})
-        films = list(await session.scalars(select(Film).where(Film.actif).order_by(Film.id)))
-        salles = list(await session.scalars(select(Salle).order_by(Salle.id)))
-        evenement = await session.scalar(select(Evenement).order_by(Evenement.id).limit(1))
-        if not films or not salles:
+        if not await session.scalar(select(func.count()).select_from(Salle)):
             return
-        aujourd_hui = datetime.now(PARIS).date()
-        creees: list[Seance] = []
-        for d in range(jours):
-            jour = aujourd_hui + timedelta(days=d)
-            debut = datetime.combine(jour, time(0), PARIS)
-            existe = await session.scalar(
-                select(func.count()).select_from(Seance).where(Seance.debut >= debut, Seance.debut < debut + timedelta(days=1))
-            )
-            if not existe:
-                creees += await programmer_jour(session, jour, films, salles, evenement)
-        await simuler_ventes(session, creees)
+        nouvelles: dict[Seance, float | None] = {s: None for s in await programmer_evenements(session, jours)}
+        if settings.programme_source == "cgr":
+            try:
+                async with session.begin_nested():
+                    nouvelles |= await programmation_cgr.importer(session, jours)
+            except Exception:
+                log.exception("programmation du CGR injoignable, on garde celle en place")
+        a_venir = await session.scalar(
+            select(func.count())
+            .select_from(Seance)
+            .where(Seance.debut > datetime.now(PARIS), Seance.evenement_id.is_(None))
+        )
+        if settings.programme_source == "demo" or (settings.programme_source == "cgr" and not a_venir):
+            nouvelles |= {s: None for s in await programmation_fictive(session, jours)}
+        await simuler_ventes(session, nouvelles)
         await session.commit()
-        if creees:
-            await remplissage.recalculer(session, [s.id for s in creees])
-            log.info("%d séances programmées", len(creees))
+        if nouvelles:
+            await remplissage.recalculer(session, [s.id for s in nouvelles])
+            log.info("%d séances programmées", len(nouvelles))
 
 
 async def initialiser() -> None:

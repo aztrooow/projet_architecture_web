@@ -55,8 +55,12 @@ class Film(Base):
     synopsis: Mapped[str] = mapped_column(Text, default="")
     # standard, 3d, art_essai : sert au moteur de tarification
     type_production: Mapped[str] = mapped_column(String(20), default="standard")
-    # teinte de l'affiche dessinée par le front
+    # teinte dominante de l'affiche, reprise en fond de la fiche du film
     couleur: Mapped[str] = mapped_column(String(7), default="#8f1d21")
+    affiche_url: Mapped[str | None] = mapped_column(String(300))
+    image_url: Mapped[str | None] = mapped_column(String(300))
+    # identifiant chez la source de la programmation (films importés)
+    source_id: Mapped[str | None] = mapped_column(String(40), unique=True)
     actif: Mapped[bool] = mapped_column(default=True)
 
 
@@ -77,6 +81,7 @@ class Seance(Base):
     debut: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     version: Mapped[str] = mapped_column(String(8), default="VF")
     evenement_id: Mapped[int | None] = mapped_column(ForeignKey("evenements.id", ondelete="SET NULL"))
+    source_id: Mapped[str | None] = mapped_column(String(40), unique=True)
 
 
 class Categorie(Base):

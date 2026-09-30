@@ -128,6 +128,8 @@ class FilmIn(BaseModel):
     synopsis: str = ""
     type_production: TypeProduction = "standard"
     couleur: str = Field("#8f1d21", pattern=r"^#[0-9a-fA-F]{6}$")
+    affiche_url: str | None = Field(None, pattern=r"^https://\S+$", max_length=300)
+    image_url: str | None = Field(None, pattern=r"^https://\S+$", max_length=300)
 
 
 @router.get("/films")

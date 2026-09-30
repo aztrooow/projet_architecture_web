@@ -133,7 +133,7 @@ async def test_routes_internes_fermees_sans_jeton_de_service(client, seance):
 
 
 async def test_evenement_au_tarif_unique(client):
-    seance = await nouvelle_seance("Terminator 2 : Le Jugement dernier", jours=3, evenement_id=1)
+    seance = await nouvelle_seance(jours=3, evenement_id=1)
     tarifs = (await client.get(f"/api/seances/{seance}")).json()["tarifs"]
     assert {t["prix_centimes"] for t in tarifs} == {2500}
 

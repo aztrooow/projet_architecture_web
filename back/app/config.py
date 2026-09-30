@@ -22,5 +22,11 @@ class Settings(BaseSettings):
     donnees_demo: bool = True
     fuseau: str = "Europe/Paris"
 
+    # programmation : « cgr » importe les séances réelles du CGR Évry 2,
+    # « demo » génère une semaine fictive, « aucune » laisse la main au gérant
+    programme_source: str = "cgr"
+    programme_api: str = "https://www.cgrcinemas.fr/api/gatsby-source-boxofficeapi"
+    programme_cinema: str = "B0059"
+
 
 settings = Settings()
