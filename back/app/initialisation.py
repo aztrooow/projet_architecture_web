@@ -143,12 +143,16 @@ async def creer_schema() -> None:
 
 
 async def creer_comptes(session) -> None:
+    """Les mots de passe du personnel suivent la configuration à chaque démarrage."""
     for identifiant, mot_de_passe in (
         ("gerant", settings.gerant_mot_de_passe),
         ("controleur", settings.controleur_mot_de_passe),
     ):
-        if not await session.scalar(select(Compte).where(Compte.identifiant == identifiant)):
+        compte = await session.scalar(select(Compte).where(Compte.identifiant == identifiant))
+        if not compte:
             session.add(Compte(identifiant=identifiant, mot_de_passe=hasher.hash(mot_de_passe), role=identifiant))
+        elif not hasher.verify(mot_de_passe, compte.mot_de_passe):
+            compte.mot_de_passe = hasher.hash(mot_de_passe)
 
 
 async def creer_donnees_demo(session) -> None:
