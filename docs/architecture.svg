@@ -1,0 +1,170 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 880" width="1200" height="880" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>Architecture de CinetINT</title>
+  <defs>
+    <marker id="or" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c0965e"/>
+    </marker>
+    <marker id="gris" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8a8377"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="880" rx="16" fill="#0c0b09"/>
+  <text x="50" y="46"><tspan fill="#c0965e" font-size="24" font-weight="600" letter-spacing="3">CINETINT</tspan><tspan dx="16" fill="#a39c90" font-size="16">architecture de la billetterie du cinéma d'Évry</tspan></text>
+
+  <!-- navigateur -->
+  <rect x="50" y="68" width="1100" height="72" rx="10" fill="#16140f" stroke="#3a342a"/>
+  <text x="70" y="99" fill="#f3ebdd" font-size="17" font-weight="600">Navigateur</text>
+  <text x="70" y="121" fill="#a39c90" font-size="13">mobile, ordinateur, borne</text>
+  <g font-size="13" fill="#d8d0c2" text-anchor="middle">
+    <rect x="300" y="87" width="190" height="34" rx="17" fill="#201d17" stroke="#3a342a"/>
+    <text x="395" y="109">Spectateur</text>
+    <rect x="510" y="87" width="190" height="34" rx="17" fill="#201d17" stroke="#3a342a"/>
+    <text x="605" y="109">Borne du hall</text>
+    <rect x="720" y="87" width="190" height="34" rx="17" fill="#201d17" stroke="#3a342a"/>
+    <text x="815" y="109">Contrôleur (caméra)</text>
+    <rect x="930" y="87" width="200" height="34" rx="17" fill="#201d17" stroke="#3a342a"/>
+    <text x="1030" y="109">Gérant (back-office)</text>
+  </g>
+
+  <line x1="600" y1="140" x2="600" y2="170" stroke="#c0965e" stroke-width="2" marker-end="url(#or)"/>
+  <text x="612" y="161" fill="#a39c90" font-size="12">HTTPS</text>
+
+  <!-- reverse proxy -->
+  <rect x="50" y="174" width="1100" height="82" rx="10" fill="#16140f" stroke="#3a342a"/>
+  <text x="70" y="200"><tspan fill="#f3ebdd" font-size="17" font-weight="600">nginx</tspan><tspan dx="14" fill="#a39c90" font-size="13">TLS Let's Encrypt, routage par préfixe (le futur Ingress Kubernetes), /internal n'est jamais exposé</tspan></text>
+  <g font-size="13" fill="#0c0b09" font-weight="600" text-anchor="middle">
+    <rect x="127" y="214" width="92" height="28" rx="14" fill="#c0965e"/>
+    <text x="173" y="233">/</text>
+    <rect x="411" y="214" width="92" height="28" rx="14" fill="#c0965e"/>
+    <text x="457" y="233">/api</text>
+    <rect x="696" y="214" width="92" height="28" rx="14" fill="#c0965e"/>
+    <text x="742" y="233">/qr</text>
+    <rect x="967" y="214" width="122" height="28" rx="14" fill="#c0965e"/>
+    <text x="1028" y="233">/verification</text>
+  </g>
+
+  <g stroke="#c0965e" stroke-width="2" marker-end="url(#or)">
+    <line x1="173" y1="256" x2="173" y2="296"/>
+    <line x1="457" y1="256" x2="457" y2="296"/>
+    <line x1="742" y1="256" x2="742" y2="296"/>
+    <line x1="1028" y1="256" x2="1028" y2="296"/>
+  </g>
+
+  <!-- services -->
+  <g>
+    <rect x="50" y="300" width="245" height="172" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <text x="68" y="328" fill="#f3ebdd" font-size="18" font-weight="600">front</text>
+    <text x="277" y="328" fill="#a39c90" font-size="13" text-anchor="end">port 8080</text>
+    <text x="68" y="352" fill="#d8d0c2" font-size="13">Catalogue rendu côté serveur,</text>
+    <text x="68" y="370" fill="#d8d0c2" font-size="13">application React pour le reste</text>
+    <line x1="68" y1="386" x2="277" y2="386" stroke="#3a342a"/>
+    <text x="68" y="408" fill="#c0965e" font-size="13">FastAPI, Jinja2</text>
+    <text x="68" y="428" fill="#c0965e" font-size="13">React 19, React Router 8</text>
+    <text x="68" y="448" fill="#c0965e" font-size="13">Vite 8, TypeScript</text>
+  </g>
+  <g>
+    <rect x="335" y="300" width="245" height="172" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <text x="353" y="328" fill="#f3ebdd" font-size="18" font-weight="600">back</text>
+    <text x="562" y="328" fill="#a39c90" font-size="13" text-anchor="end">port 8000</text>
+    <text x="353" y="352" fill="#d8d0c2" font-size="13">Commandes, verrous, tarifs,</text>
+    <text x="353" y="370" fill="#d8d0c2" font-size="13">remboursements, temps réel</text>
+    <line x1="353" y1="386" x2="562" y2="386" stroke="#3a342a"/>
+    <text x="353" y="408" fill="#c0965e" font-size="13">FastAPI, Uvicorn, SSE</text>
+    <text x="353" y="428" fill="#c0965e" font-size="13">SQLAlchemy 2, asyncpg</text>
+    <text x="353" y="448" fill="#c0965e" font-size="13">redis-py, PyJWT, Argon2</text>
+  </g>
+  <g>
+    <rect x="620" y="300" width="245" height="172" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <text x="638" y="328" fill="#f3ebdd" font-size="18" font-weight="600">qr-generator</text>
+    <text x="847" y="328" fill="#a39c90" font-size="13" text-anchor="end">port 8001</text>
+    <text x="638" y="352" fill="#d8d0c2" font-size="13">Signe les billets (clé privée),</text>
+    <text x="638" y="370" fill="#d8d0c2" font-size="13">dessine le QR code et le PDF</text>
+    <line x1="638" y1="386" x2="847" y2="386" stroke="#3a342a"/>
+    <text x="638" y="408" fill="#c0965e" font-size="13">FastAPI</text>
+    <text x="638" y="428" fill="#c0965e" font-size="13">cryptography (Ed25519)</text>
+    <text x="638" y="448" fill="#c0965e" font-size="13">segno, fpdf2</text>
+  </g>
+  <g>
+    <rect x="905" y="300" width="245" height="172" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <text x="923" y="328" fill="#f3ebdd" font-size="18" font-weight="600">qr-verifier</text>
+    <text x="1132" y="328" fill="#a39c90" font-size="13" text-anchor="end">port 8002</text>
+    <text x="923" y="352" fill="#d8d0c2" font-size="13">Vérifie la signature (clé</text>
+    <text x="923" y="370" fill="#d8d0c2" font-size="13">publique) et l'usage unique</text>
+    <line x1="923" y1="386" x2="1132" y2="386" stroke="#3a342a"/>
+    <text x="923" y="408" fill="#c0965e" font-size="13">FastAPI, httpx</text>
+    <text x="923" y="428" fill="#c0965e" font-size="13">cryptography (Ed25519)</text>
+    <text x="923" y="448" fill="#c0965e" font-size="13">PyJWT</text>
+  </g>
+
+  <!-- échanges entre services -->
+  <g stroke="#c0965e" stroke-width="2" fill="none" marker-end="url(#or)">
+    <line x1="295" y1="352" x2="332" y2="352"/>
+    <line x1="580" y1="352" x2="617" y2="352"/>
+    <path d="M1000,472 L1000,508 L560,508 L560,476"/>
+    <line x1="420" y1="472" x2="420" y2="596"/>
+    <path d="M520,472 L520,540 L700,540 L700,596"/>
+  </g>
+  <g stroke="#8a8377" stroke-width="2" fill="none" stroke-dasharray="6 5" marker-end="url(#gris)">
+    <line x1="905" y1="428" x2="868" y2="428"/>
+    <path d="M360,472 L360,552 L170,552 L170,596"/>
+  </g>
+
+  <!-- numéros des échanges -->
+  <g font-size="12" font-weight="700" text-anchor="middle">
+    <circle cx="314" cy="336" r="11" fill="#c0965e"/><text x="314" y="340" fill="#0c0b09">1</text>
+    <circle cx="599" cy="336" r="11" fill="#c0965e"/><text x="599" y="340" fill="#0c0b09">2</text>
+    <circle cx="780" cy="508" r="11" fill="#c0965e"/><text x="780" y="512" fill="#0c0b09">3</text>
+    <circle cx="886" cy="412" r="11" fill="#8a8377"/><text x="886" y="416" fill="#0c0b09">4</text>
+    <circle cx="420" cy="570" r="11" fill="#c0965e"/><text x="420" y="574" fill="#0c0b09">5</text>
+    <circle cx="610" cy="540" r="11" fill="#c0965e"/><text x="610" y="544" fill="#0c0b09">6</text>
+    <circle cx="265" cy="552" r="11" fill="#8a8377"/><text x="265" y="556" fill="#0c0b09">7</text>
+  </g>
+
+  <!-- données et source externe -->
+  <g>
+    <rect x="50" y="600" width="245" height="104" rx="10" fill="#16140f" stroke="#8a8377" stroke-dasharray="6 5"/>
+    <text x="68" y="628" fill="#f3ebdd" font-size="16" font-weight="600">Programmation CGR</text>
+    <text x="68" y="652" fill="#a39c90" font-size="13">API publique du CGR Évry 2</text>
+    <text x="68" y="672" fill="#a39c90" font-size="13">films, affiches, horaires</text>
+    <text x="68" y="692" fill="#a39c90" font-size="13">source extérieure</text>
+  </g>
+  <g>
+    <rect x="335" y="600" width="245" height="104" rx="10" fill="#16140f" stroke="#6b6358" stroke-width="1.5"/>
+    <text x="353" y="628" fill="#f3ebdd" font-size="16" font-weight="600">PostgreSQL 17</text>
+    <text x="353" y="652" fill="#a39c90" font-size="13">source de vérité : séances,</text>
+    <text x="353" y="672" fill="#a39c90" font-size="13">billets, tarifs, commandes</text>
+    <text x="353" y="692" fill="#a39c90" font-size="13">index unique (séance, siège)</text>
+  </g>
+  <g>
+    <rect x="620" y="600" width="245" height="104" rx="10" fill="#16140f" stroke="#6b6358" stroke-width="1.5"/>
+    <text x="638" y="628" fill="#f3ebdd" font-size="16" font-weight="600">Redis 8</text>
+    <text x="638" y="652" fill="#a39c90" font-size="13">verrous de sièges (TTL, Lua)</text>
+    <text x="638" y="672" fill="#a39c90" font-size="13">compteurs de remplissage</text>
+    <text x="638" y="692" fill="#a39c90" font-size="13">pub/sub du temps réel</text>
+  </g>
+  <g>
+    <rect x="905" y="600" width="245" height="104" rx="10" fill="#0c0b09" stroke="#3a342a"/>
+    <line x1="923" y1="622" x2="953" y2="622" stroke="#c0965e" stroke-width="2"/>
+    <text x="963" y="626" fill="#a39c90" font-size="12">requête HTTP</text>
+    <line x1="923" y1="644" x2="953" y2="644" stroke="#8a8377" stroke-width="2" stroke-dasharray="6 5"/>
+    <text x="963" y="648" fill="#a39c90" font-size="12">appel ponctuel</text>
+    <rect x="923" y="659" width="30" height="14" rx="3" fill="none" stroke="#c0965e" stroke-width="1.5"/>
+    <text x="963" y="671" fill="#a39c90" font-size="12">service applicatif (conteneur)</text>
+    <rect x="923" y="681" width="30" height="14" rx="3" fill="none" stroke="#6b6358" stroke-width="1.5"/>
+    <text x="963" y="693" fill="#a39c90" font-size="12">donnée (conteneur)</text>
+  </g>
+
+  <!-- légende des échanges -->
+  <g font-size="13" fill="#d8d0c2">
+    <text x="50" y="746"><tspan fill="#c0965e" font-weight="700">1</tspan>  le front lit la programmation dans l'API pour le rendu serveur</text>
+    <text x="50" y="770"><tspan fill="#c0965e" font-weight="700">2</tspan>  émission des billets : signature Ed25519 et PDF (/internal)</text>
+    <text x="50" y="794"><tspan fill="#c0965e" font-weight="700">3</tspan>  contrôle : passage atomique du billet à « utilisé » (/internal)</text>
+    <text x="50" y="818"><tspan fill="#8a8377" font-weight="700">4</tspan>  le vérificateur lit la clé publique au démarrage</text>
+    <text x="620" y="746"><tspan fill="#c0965e" font-weight="700">5</tspan>  transactions, contrainte d'unicité contre la double réservation</text>
+    <text x="620" y="770"><tspan fill="#c0965e" font-weight="700">6</tspan>  verrous à expiration, compteurs, diffusion entre instances</text>
+    <text x="620" y="794"><tspan fill="#8a8377" font-weight="700">7</tspan>  import de la programmation réelle, toutes les heures</text>
+    <text x="620" y="818" fill="#a39c90">Le navigateur reçoit le temps réel en SSE depuis le back.</text>
+  </g>
+  <text x="50" y="856" fill="#6b6358" font-size="12">Aujourd'hui : docker compose derrière nginx. Demain : un Deployment par service sous Kubernetes, même découpage.</text>
+</svg>

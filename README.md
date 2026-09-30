@@ -13,6 +13,8 @@ Version en ligne : **https://fisa.eclipse-technology.eu**
 | Espace gérant | [/admin](https://fisa.eclipse-technology.eu/admin) |
 | Documentation de l'API | [/api/docs](https://fisa.eclipse-technology.eu/api/docs) |
 
+Documentation technique : [docs/architecture.md](docs/architecture.md) (schéma, technologies, échanges entre services, données, déploiement).
+
 ---
 
 ## 1. Résumé du besoin
@@ -91,7 +93,7 @@ La billetterie en ligne répond aux deux : elle sort la vente des bornes (la cap
 - Journal du contrôle d'entrée (repasses et faux billets compris).
 - Réglages : durée du blocage des places, nombre maximum de places par commande, délai de remboursement.
 
-**Programmation réelle.** Les films, affiches, synopsis et horaires sont repris chaque heure de la programmation publique du CGR Évry 2, puis répartis sur nos six salles. Si cette source ne répond pas, la programmation en place est conservée ; au tout premier démarrage sans réseau, une semaine fictive est générée.
+**Programmation réelle.** Les films, affiches, synopsis et horaires sont repris chaque heure de la programmation publique du CGR Évry 2, puis répartis sur nos six salles. Si cette source ne répond pas, la programmation en place est conservée ; s'il n'y a plus aucune séance à venir (premier démarrage sans réseau, par exemple), une semaine fictive est générée. Pour que les plans de salle ne soient pas vides à la démonstration, chaque nouvelle séance reçoit des ventes simulées, enregistrées comme des ventes aux bornes.
 
 ---
 
@@ -99,33 +101,9 @@ La billetterie en ligne répond aux deux : elle sort la vente des bornes (la cap
 
 Quatre services applicatifs, chacun dans son conteneur, plus PostgreSQL et Redis.
 
-```mermaid
-flowchart LR
-    navigateur["Navigateur<br/>(web, borne, contrôleur, gérant)"]
+![Architecture de CinetINT : services, technologies et échanges](docs/architecture.svg)
 
-    subgraph services[Services]
-        front["front<br/>FastAPI + Jinja + React"]
-        back["back<br/>API FastAPI"]
-        gen["qr-generator<br/>clé privée Ed25519"]
-        verif["qr-verifier<br/>clé publique"]
-    end
-
-    pg[("PostgreSQL<br/>la vérité")]
-    redis[("Redis<br/>verrous, compteurs, pub/sub")]
-    cgr["Programmation CGR Évry 2<br/>(source externe)"]
-
-    navigateur -- "/ pages" --> front
-    navigateur -- "/api REST + SSE" --> back
-    navigateur -- "/qr image du billet" --> gen
-    navigateur -- "/verification scan" --> verif
-    front -- "catalogue (rendu serveur)" --> back
-    back -- "/internal signature, PDF" --> gen
-    verif -- "/internal passage valide vers utilisé" --> back
-    verif -. "clé publique au démarrage" .-> gen
-    back --> pg
-    back --> redis
-    back -. "import horaire" .-> cgr
-```
+La [documentation technique](docs/architecture.md) détaille chaque service, les technologies et leurs versions, les échanges pas à pas (diagrammes de séquence), les clés Redis, la sécurité, la configuration et le passage sous Kubernetes.
 
 | Service | Rôle | Port | Détient |
 |---|---|---|---|
@@ -178,11 +156,11 @@ erDiagram
     EVENEMENT |o--o{ SEANCE : "peut porter"
     SEANCE ||--o{ COMMANDE : "fait l'objet de"
     COMMANDE ||--o{ BILLET : "émet"
-    SEANCE ||--o{ BILLET : ""
-    SIEGE ||--o{ BILLET : ""
+    SEANCE ||--o{ BILLET : admet
+    SIEGE ||--o{ BILLET : "occupé par"
     BILLET |o--o{ CONTROLE : "passe au"
-    EVENEMENT |o--o{ REGLE_TARIFAIRE : ""
-    CATEGORIE |o--o{ REGLE_TARIFAIRE : ""
+    EVENEMENT |o--o{ REGLE_TARIFAIRE : "a pour tarif"
+    CATEGORIE |o--o{ REGLE_TARIFAIRE : "tarifée par"
 ```
 
 | Table | Rôle | Colonnes principales |
