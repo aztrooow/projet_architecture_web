@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% from "_macros.html" import affiche, horaire %}
+
+{% block classe_corps %}page-accueil{% endblock %}
+
+{% block tete %}
+<link rel="preload" as="image" href="/static/img/salle-2400.webp" media="(min-width: 801px)">
+<link rel="preload" as="image" href="/static/img/salle-1200.webp" media="(max-width: 800px)">
+<script>
+  // l'ouverture ne se joue qu'une fois par visite
+  try { if (!sessionStorage.getItem('cinetint.intro')) document.documentElement.classList.add('avec-intro') } catch (e) {}
+</script>
+{% endblock %}
+
+{% block contenu %}
+<div class="intro" aria-hidden="true" data-intro>
+  <div class="intro__volet intro__volet--haut"></div>
+  <div class="intro__volet intro__volet--bas"></div>
+  <div class="intro__rayons"></div>
+  <div class="intro__fente"></div>
+  <div class="intro__scene">
+    <p class="intro__marque">
+      {% for lettre in "Cinet" %}<span style="--i: {{ loop.index0 }}">{{ lettre }}</span>{% endfor %}
+      {%- for lettre in "INT" %}<span class="intro__int" style="--i: {{ loop.index0 + 5 }}">{{ lettre }}</span>{% endfor %}
+    </p>
+    <p class="intro__lieu">Le cinéma d'Évry</p>
+  </div>
+</div>
+
+<section class="hero" data-hero>
+  <picture class="hero__photo">
+    <source media="(max-width: 800px)" srcset="/static/img/salle-1200.webp">
+    <img src="/static/img/salle-2400.webp" alt="Salle de cinéma plongée dans le noir, fauteuils rouges de part et d'autre de l'escalier" width="2400" height="1600" fetchpriority="high">
+  </picture>
+  <div class="hero__contenu conteneur">
+    <h1 class="hero__titre"><span>Votre fauteuil</span> <span>vous attend.</span></h1>
+    <p class="hero__texte">Choisissez la séance et la place, payez en ligne, le billet s'affiche sur votre téléphone. Sans compte, sans file d'attente.</p>
+    <div class="hero__actions">
+      <a class="bouton bouton--plein" href="#programme">Voir les séances</a>
+      {% if evenement %}<a class="bouton" href="#evenement">Évènement du samedi</a>{% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="chiffres conteneur" aria-label="Le cinéma en chiffres">
+  <p><span class="chiffres__valeur" data-compteur="{{ salles or 6 }}">{{ salles or 6 }}</span><span class="chiffres__legende">salles</span></p>
+  <p><span class="chiffres__valeur" data-compteur="{{ fauteuils or 0 }}">{{ "{:,}".format(fauteuils or 0).replace(",", " ") }}</span><span class="chiffres__legende">fauteuils</span></p>
+  <p><span class="chiffres__valeur" data-compteur="{{ nb_seances }}">{{ nb_seances }}</span><span class="chiffres__legende">séances aujourd'hui</span></p>
+</section>
+
+<section class="programme conteneur" id="programme" aria-labelledby="titre-programme">
+  <h2 class="titre-section" id="titre-programme">À l'affiche</h2>
+  {% if not films %}
+  <p class="etat-vide">La programmation de la semaine arrive bientôt.</p>
+  {% endif %}
+  <ol class="films">
+    {% for film in films %}
+    <li class="film" data-revele style="--i: {{ loop.index0 % 4 }}">
+      <a class="film__affiche" href="/films/{{ film.id }}" tabindex="-1">{{ affiche(film) }}</a>
+      <div class="film__texte">
+        <h3 class="film__titre"><a href="/films/{{ film.id }}">{{ film.titre }}</a></h3>
+        <p class="film__meta">
+          <span>{{ film.genre }}</span>
+          <span>{{ film.duree_min | duree }}</span>
+          {% if film.type_production | type_production %}<span class="film__type">{{ film.type_production | type_production }}</span>{% endif %}
+        </p>
+        <p class="film__realisation">De {{ film.realisation }}</p>
+        <p class="film__synopsis">{{ film.synopsis }}</p>
+      </div>
+      <div class="film__seances">
+        {% if film.prochaines %}
+        <p class="film__jour">Aujourd'hui</p>
+        <div class="horaires">
+          {% for s in film.prochaines %}{{ horaire(s, film) }}{% endfor %}
+        </div>
+        {% elif film.seances %}
+        <p class="film__jour">Prochaine séance</p>
+        <div class="horaires">{{ horaire(film.seances[0], film) }}</div>
+        <p class="film__quand">{{ film.seances[0].debut | jour }}</p>
+        {% endif %}
+        <a class="film__plus" href="/films/{{ film.id }}">Toutes les séances de la semaine</a>
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+
+{% if evenement %}
+{% set restantes = evenement.salle.capacite - evenement.vendus %}
+<section class="evenement" id="evenement" aria-labelledby="titre-evenement">
+  <div class="evenement__photo">
+    <picture>
+      <source media="(max-width: 800px)" srcset="/static/img/fauteuil-800.webp">
+      <img src="/static/img/fauteuil-1600.webp" alt="Fauteuil de velours rouge numéroté 23 en lettres dorées" width="1600" height="1060" loading="lazy">
+    </picture>
+  </div>
+  <div class="evenement__cadre" data-revele>
+    <p class="evenement__surtitre">Chaque samedi soir</p>
+    <h2 class="evenement__titre" id="titre-evenement">{{ evenement.nom }}</h2>
+    <p class="evenement__texte">{{ evenement.description }}</p>
+    <dl class="evenement__infos">
+      <div><dt>Prochaine date</dt><dd class="capitalise">{{ evenement.debut | date_longue }}, {{ evenement.debut | heure }}</dd></div>
+      <div><dt>Salle</dt><dd>{{ evenement.salle.nom }}</dd></div>
+      <div><dt>Tarif unique</dt><dd>{{ evenement.prix_centimes | euros }}</dd></div>
+    </dl>
+    <div class="evenement__action">
+      <a class="bouton bouton--plein" href="/seances/{{ evenement.seance_id }}">Réserver ma place</a>
+      <p class="evenement__jauge">{% if restantes > 0 %}{{ restantes }} places restantes sur {{ evenement.salle.capacite }}{% else %}Complet{% endif %}</p>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if grille %}
+<section class="tarifs conteneur" id="tarifs" aria-labelledby="titre-tarifs">
+  <h2 class="titre-section" id="titre-tarifs">Tarifs</h2>
+  <p class="tarifs__intro">Le prix de chaque place s'affiche avant le paiement et reste inscrit sur le billet. Une séance évènement a son propre tarif unique, quelle que soit la catégorie.</p>
+  <ul class="tarifs__liste">
+    {% for regle in grille %}
+    <li class="tarif{% if regle.evenement %} tarif--evenement{% endif %}" data-revele style="--i: {{ loop.index0 % 3 }}">
+      <span class="tarif__libelle">{{ regle.libelle }}</span>
+      <span class="tarif__criteres">{{ regle | criteres }}</span>
+      <span class="tarif__prix">{{ regle.prix_centimes | euros }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

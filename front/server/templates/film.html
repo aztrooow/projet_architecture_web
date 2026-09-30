@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_macros.html" import affiche, horaire %}
+
+{% block titre %}{{ film.titre }}, séances au cinéma d'Évry | CinetINT{% endblock %}
+{% block description %}{{ film.synopsis }} Séances et réservation au cinéma d'Évry.{% endblock %}
+
+{% block contenu %}
+<section class="fiche{% if film.image_url %} fiche--photo{% endif %}" style="--teinte: {{ film.couleur }}">
+  {% if film.image_url %}
+  <picture class="fiche__photo">
+    <source media="(max-width: 800px)" srcset="{{ film.image_url | variante('r_800_x') }}">
+    <img src="{{ film.image_url | variante('r_1280_x') }}" alt="" fetchpriority="high">
+  </picture>
+  {% endif %}
+  <div class="fiche__contenu conteneur">
+    <div class="fiche__affiche">{{ affiche(film, "grande", chargement="eager") }}</div>
+    <div class="fiche__texte">
+      <p class="fiche__fil"><a href="/#programme">À l'affiche</a></p>
+      <h1 class="fiche__titre">{{ film.titre }}</h1>
+      <p class="fiche__meta">
+        <span>{{ film.genre }}</span>
+        <span>{{ film.duree_min | duree }}</span>
+        {% if film.annee %}<span>{{ film.annee }}</span>{% endif %}
+        {% if film.type_production | type_production %}<span class="film__type">{{ film.type_production | type_production }}</span>{% endif %}
+      </p>
+      <p class="fiche__realisation">Réalisation : {{ film.realisation }}</p>
+      <p class="fiche__synopsis">{{ film.synopsis }}</p>
+    </div>
+  </div>
+</section>
+
+<section class="seances conteneur" aria-labelledby="titre-seances" data-onglets>
+  <h2 class="titre-section" id="titre-seances">Séances</h2>
+  {% if not jours %}
+  <p class="etat-vide">Aucune séance programmée pour le moment.</p>
+  {% else %}
+  <div class="jours" role="tablist" aria-label="Jour de la séance">
+    {% for jour in jours %}
+    {% set court = jour | jour_court %}
+    <button type="button" class="jour" role="tab" id="onglet-{{ jour }}" aria-controls="jour-{{ jour }}"
+            aria-selected="{{ 'true' if loop.first else 'false' }}" tabindex="{{ 0 if loop.first else -1 }}">
+      <span class="jour__nom">{{ court.nom }}</span>
+      <span class="jour__numero">{{ court.numero }}</span>
+      <span class="jour__mois">{{ court.mois }}</span>
+    </button>
+    {% endfor %}
+  </div>
+  {% for jour, liste in jours.items() %}
+  <div class="jours__panneau" role="tabpanel" id="jour-{{ jour }}" aria-labelledby="onglet-{{ jour }}" {% if not loop.first %}hidden{% endif %}>
+    <p class="jours__date capitalise">{{ liste[0].debut | date_longue }}</p>
+    <div class="horaires horaires--larges">
+      {% for s in liste %}{{ horaire(s, film) }}{% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+</section>
+{% endblock %}

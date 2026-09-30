@@ -1,0 +1,447 @@
+/* Charte « le Rex, de nuit » : or sur noir chaud, capitales étroites. */
+:root {
+  color-scheme: dark;
+
+  --fond: #0c0b09;
+  --surface: #16140f;
+  --surface-haute: #201d17;
+  --bordure: #3a342a;
+  --filet: rgba(192, 150, 94, 0.24);
+  --or: #c0965e;
+  --or-clair: #d9b886;
+  --or-fonce: #8c6b3c;
+  --texte: #f3ebdd;
+  --texte-doux: #a39c90;
+  --rouge: #c82030;
+  --vert: #3f9b6e;
+
+  --police-titre: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --police-meta: 'Barlow Semi Condensed', 'Arial Narrow', sans-serif;
+  --police-texte: 'Barlow', system-ui, sans-serif;
+
+  --rayon-affiche: 2px;
+  --rayon-puce: 6px;
+  --rayon-carte: 10px;
+
+  --sortie: cubic-bezier(0.165, 0.84, 0.44, 1);
+  --standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --largeur: 1240px;
+  --gouttiere: 16px;
+  --entete: 64px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gouttiere: 32px;
+    --entete: 72px;
+  }
+}
+
+@media (min-width: 1100px) {
+  :root {
+    --gouttiere: 56px;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--entete) + 16px);
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: var(--police-texte);
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  flex: 1;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--police-titre);
+  font-weight: 600;
+  line-height: 1.05;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--or);
+  text-decoration: none;
+  transition: color 0.2s var(--standard);
+}
+
+a:hover {
+  color: var(--or-clair);
+}
+
+:focus-visible {
+  outline: 2px solid var(--or);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--or);
+  color: var(--fond);
+}
+
+.visuellement-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+span.capitalise {
+  display: inline-block;
+}
+
+.capitalise::first-letter {
+  text-transform: uppercase;
+}
+
+.conteneur {
+  width: 100%;
+  max-width: var(--largeur);
+  margin-inline: auto;
+  padding-inline: var(--gouttiere);
+}
+
+.page {
+  width: 100%;
+  max-width: var(--largeur);
+  margin-inline: auto;
+  padding: 40px var(--gouttiere) 72px;
+}
+
+.page--etroite {
+  max-width: 720px;
+}
+
+/* titre de section entre deux filets, clin d'oeil aux frontons Art déco */
+.titre-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-weight: 200;
+  font-size: clamp(34px, 5vw, 52px);
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+.titre-section::before,
+.titre-section::after {
+  content: '';
+  flex: 1;
+  height: 5px;
+  border-block: 1px solid var(--filet);
+}
+
+.titre-section::before {
+  max-width: 64px;
+}
+
+/* ---------- boutons */
+
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 26px;
+  border: 1px solid var(--or);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--or);
+  font-family: var(--police-titre);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.25s var(--sortie),
+    color 0.25s var(--sortie),
+    transform 0.2s var(--sortie);
+}
+
+.bouton:hover {
+  background: rgba(192, 150, 94, 0.12);
+  color: var(--or-clair);
+}
+
+.bouton:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.bouton--plein {
+  background: var(--or);
+  color: var(--fond);
+}
+
+.bouton--plein:hover {
+  background: var(--or-clair);
+  color: var(--fond);
+}
+
+.bouton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.bouton--danger {
+  border-color: var(--rouge);
+  color: #ff8f99;
+}
+
+.bouton--danger:hover {
+  background: rgba(200, 32, 48, 0.14);
+  color: #ffb3ba;
+}
+
+.bouton--petit {
+  min-height: 36px;
+  padding: 6px 16px;
+  font-size: 14px;
+}
+
+.lien {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--texte-doux);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.lien:hover {
+  color: var(--texte);
+}
+
+/* ---------- formulaires */
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--texte-doux);
+  font-family: var(--police-titre);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-puce);
+  background: var(--surface-haute);
+  color: var(--texte);
+  font: inherit;
+  font-size: 16px;
+  transition: border-color 0.2s var(--standard);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8a8377;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--or);
+  box-shadow: 0 0 0 3px rgba(192, 150, 94, 0.18);
+}
+
+.champ {
+  display: grid;
+  gap: 2px;
+}
+
+.champ__aide {
+  color: var(--texte-doux);
+  font-size: 13px;
+}
+
+/* ---------- messages et états */
+
+.message {
+  padding: 12px 14px;
+  border-radius: var(--rayon-puce);
+  border: 1px solid var(--bordure);
+  background: var(--surface-haute);
+  font-size: 15px;
+}
+
+.message--alerte {
+  border-color: rgba(200, 32, 48, 0.6);
+  background: rgba(200, 32, 48, 0.12);
+  color: #ffc2c7;
+}
+
+.message--ok {
+  border-color: rgba(63, 155, 110, 0.6);
+  background: rgba(63, 155, 110, 0.12);
+  color: #bfe8d3;
+}
+
+.etat-vide {
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+  padding-block: 56px;
+}
+
+.etat-vide h1,
+.etat-vide h2 {
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 300;
+}
+
+.etat-vide p {
+  color: var(--texte-doux);
+  max-width: 52ch;
+}
+
+.squelette {
+  border-radius: var(--rayon-carte);
+  background: linear-gradient(100deg, var(--surface) 30%, var(--surface-haute) 50%, var(--surface) 70%);
+  background-size: 300% 100%;
+  animation: reflet 2.4s ease infinite;
+}
+
+@keyframes reflet {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .squelette {
+    animation: none;
+  }
+}
+
+/* ---------- affiche typographique (pas d'affiches officielles : droits réservés) */
+
+.affiche {
+  --teinte: #8f1d21;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  aspect-ratio: 2 / 3;
+  padding: 14px;
+  overflow: hidden;
+  border-radius: var(--rayon-affiche);
+  background:
+    radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--teinte) 85%, white 15%) 0%, transparent 60%),
+    linear-gradient(180deg, var(--teinte) 0%, color-mix(in srgb, var(--teinte) 30%, black) 100%);
+  box-shadow: inset 0 0 0 1px rgba(243, 235, 221, 0.08);
+  isolation: isolate;
+}
+
+/* rayons discrets en haut de l'affiche */
+.affiche::before {
+  content: '';
+  position: absolute;
+  inset: -40% -40% 35%;
+  z-index: -1;
+  background: repeating-conic-gradient(from 180deg at 50% 100%, rgba(255, 255, 255, 0.07) 0deg 2deg, transparent 2deg 9deg);
+  mask-image: radial-gradient(circle at 50% 100%, black 20%, transparent 70%);
+}
+
+.affiche__titre {
+  font-family: var(--police-titre);
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1;
+  text-transform: uppercase;
+  color: #fff8ec;
+  text-wrap: balance;
+}
+
+.affiche__meta {
+  font-family: var(--police-meta);
+  font-size: 12px;
+  color: rgba(255, 248, 236, 0.72);
+}
+
+.affiche--petite {
+  width: 84px;
+  padding: 8px;
+}
+
+.affiche--petite .affiche__titre {
+  font-size: 12px;
+}
+
+.affiche--petite .affiche__meta {
+  display: none;
+}
+
+.affiche--grande .affiche__titre {
+  font-size: clamp(26px, 3.2vw, 34px);
+}
+
+/* vraie affiche du distributeur */
+.affiche--photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  background: var(--surface-haute);
+}
+
+.affiche--photo.affiche--petite {
+  width: 84px;
+}

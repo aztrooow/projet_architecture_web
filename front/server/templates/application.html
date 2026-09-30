@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block titre %}{% if chemin.startswith('/admin') %}Espace gérant{% elif chemin.startswith('/controle') %}Contrôle des billets{% else %}Réservation{% endif %} | CinetINT{% endblock %}
+
+{% block entete %}
+{% if chemin.startswith('/admin') or chemin.startswith('/controle') %}
+<header class="entete entete--personnel">
+  <div class="entete__contenu conteneur">
+    <a class="marque" href="/"><span class="marque__cinet">Cinet</span><span class="marque__int">INT</span></a>
+    <p class="entete__espace">{% if chemin.startswith('/admin') %}Espace gérant{% else %}Contrôle des billets{% endif %}</p>
+  </div>
+</header>
+{% elif request.query_params.get('borne') == '1' %}
+<header class="borne-entete">
+  <div class="conteneur borne-entete__contenu">
+    <a class="marque" href="/borne"><span class="marque__cinet">Cinet</span><span class="marque__int">INT</span></a>
+    <a class="bouton bouton--petit" href="/borne">Retour aux séances</a>
+  </div>
+</header>
+{% else %}
+{{ super() }}
+{% endif %}
+{% endblock %}
+
+{% block contenu %}<div id="app"></div>{% endblock %}
+
+{% block pied %}{% if not chemin.startswith('/controle') and request.query_params.get('borne') != '1' %}{{ super() }}{% endif %}{% endblock %}

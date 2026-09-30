@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_macros.html" import affiche, horaire %}
+
+{% block titre %}Borne de vente | CinetINT{% endblock %}
+{% block classe_corps %}mode-borne{% endblock %}
+
+{% block entete %}
+<header class="borne-entete">
+  <div class="conteneur borne-entete__contenu">
+    <span class="marque"><span class="marque__cinet">Cinet</span><span class="marque__int">INT</span></span>
+    <p>Touchez une séance pour choisir vos places</p>
+    <p class="borne-entete__heure" data-horloge></p>
+  </div>
+</header>
+{% endblock %}
+
+{% block contenu %}
+<div class="borne conteneur" data-borne>
+  {% for film in films %}
+  <section class="borne-film">
+    {{ affiche(film) }}
+    <div>
+      <h2 class="borne-film__titre">{{ film.titre }}</h2>
+      <p class="borne-film__meta">{{ film.genre }}, {{ film.duree_min | duree }}{% if film.type_production | type_production %}, {{ film.type_production | type_production }}{% endif %}</p>
+      <div class="horaires horaires--larges">
+        {% for s in film.prochaines %}{{ horaire(s, film, borne=True) }}{% endfor %}
+      </div>
+    </div>
+  </section>
+  {% else %}
+  <p class="etat-vide">Plus de séance aujourd'hui. À demain !</p>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block pied %}{% endblock %}

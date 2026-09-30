@@ -1,0 +1,36 @@
+{% macro affiche(film, taille="moyenne", chargement="lazy") -%}
+{% if film.affiche_url %}
+<img class="affiche affiche--photo affiche--{{ taille }}"
+     src="{{ film.affiche_url | variante('c_310_420') }}"
+     srcset="{{ film.affiche_url | variante('c_215_290') }} 215w, {{ film.affiche_url | variante('c_310_420') }} 310w, {{ film.affiche_url | variante('c_620_840') }} 620w"
+     sizes="{% if taille == 'grande' %}260px{% else %}(min-width: 900px) 150px, 96px{% endif %}"
+     alt="Affiche du film {{ film.titre }}" width="310" height="420" loading="{{ chargement }}" decoding="async">
+{% else %}
+<div class="affiche affiche--{{ taille }}" style="--teinte: {{ film.couleur }}" aria-hidden="true">
+  <span class="affiche__titre">{{ film.titre }}</span>
+  <span class="affiche__meta">{{ film.realisation.split(',')[0] }}{% if film.annee %}, {{ film.annee }}{% endif %}</span>
+</div>
+{% endif %}
+{%- endmacro %}
+
+{% macro horaire(s, film, borne=False) -%}
+{% set niveau = s | remplissage %}
+{% set type = film.type_production | type_production %}
+{% if niveau == "complet" %}
+<span class="horaire horaire--complet" aria-label="{{ s.debut | heure }}, complet">
+{% else %}
+<a class="horaire{% if niveau %} horaire--{{ niveau }}{% endif %}{% if s.evenement %} horaire--evenement{% endif %}"
+   href="/seances/{{ s.id }}{% if borne %}?borne=1{% endif %}"
+   aria-label="Séance de {{ s.debut | heure }}, {{ s.salle.nom }}, {{ s.version }}{% if niveau == 'dernieres' %}, dernières places{% endif %}">
+{% endif %}
+  <span class="horaire__badges">
+    <span class="badge{% if s.version == 'VOST' %} badge--or{% endif %}">{{ s.version }}</span>
+    {% if type == "3D" %}<span class="badge badge--or">3D</span>{% endif %}
+    {% if s.evenement %}<span class="badge badge--rouge">Évènement</span>{% endif %}
+  </span>
+  <span class="horaire__heure">{{ s.debut | heure }}</span>
+  <span class="horaire__salle">{{ s.salle.nom | replace("Salle ", "") }}</span>
+  {% if niveau == "dernieres" %}<span class="horaire__etat">Dernières places</span>
+  {% elif niveau == "complet" %}<span class="horaire__etat">Complet</span>{% endif %}
+{% if niveau == "complet" %}</span>{% else %}</a>{% endif %}
+{%- endmacro %}

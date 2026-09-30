@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titre %}CinetINT, le cinéma d'Évry{% endblock %}</title>
+  <meta name="description" content="{% block description %}Programme, plan de salle et billets en ligne du cinéma d'Évry : choisissez votre séance et votre place, sans file d'attente.{% endblock %}">
+  <meta name="theme-color" content="#0c0b09">
+  <meta property="og:title" content="{{ self.titre() }}">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/static/img/salle-1200.webp">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <script>document.documentElement.classList.add('js')</script>
+  {% for css in assets.css %}
+  <link rel="stylesheet" href="{{ css }}">
+  {% endfor %}
+  {% block tete %}{% endblock %}
+  <script>window.CINETINT = {{ configuration | safe }};</script>
+  {% if assets.js %}<script type="module" src="{{ assets.js }}"></script>{% endif %}
+</head>
+<body class="{% block classe_corps %}{% endblock %}">
+  <a class="evitement" href="#contenu">Aller au contenu</a>
+  {% block entete %}
+  <header class="entete" data-entete>
+    <div class="entete__contenu conteneur">
+      <a class="marque" href="/" aria-label="CinetINT, retour à l'accueil"><span class="marque__cinet">Cinet</span><span class="marque__int">INT</span></a>
+      <nav class="nav" aria-label="Navigation principale">
+        <a href="/#programme">À l'affiche</a>
+        <a href="/#evenement">Évènement</a>
+        <a href="/#tarifs">Tarifs</a>
+      </nav>
+      <a class="bouton bouton--petit entete__cta" href="/#programme">Réserver</a>
+    </div>
+  </header>
+  {% endblock %}
+
+  <main id="contenu">
+    {% block contenu %}{% endblock %}
+  </main>
+
+  {% block pied %}
+  <footer class="pied">
+    <div class="pied__contenu conteneur">
+      <div class="pied__marque">
+        <a class="marque" href="/"><span class="marque__cinet">Cinet</span><span class="marque__int">INT</span></a>
+        <p>Billetterie en ligne du cinéma d'Évry. Six salles, séances tous les jours dès 10h45.</p>
+      </div>
+      <nav class="pied__liens" aria-label="Espaces du personnel">
+        <a href="/controle">Contrôle des billets</a>
+        <a href="/admin">Espace gérant</a>
+        <a href="/borne">Mode borne</a>
+      </nav>
+      <p class="pied__mention">Projet d'architecture web, Télécom SudParis, FISA 2028. Films, affiches et horaires repris de la programmation du CGR Évry 2 (données AlloCiné).</p>
+    </div>
+  </footer>
+  {% endblock %}
+</body>
+</html>
