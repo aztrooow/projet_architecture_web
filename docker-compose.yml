@@ -1,0 +1,119 @@
+name: cinetint
+
+x-secrets: &secrets
+  SERVICE_TOKEN: ${SERVICE_TOKEN:-dev-service-token}
+  JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-a-changer-en-production}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+
+services:
+  front:
+    build: ./front
+    environment:
+      API_INTERNE: http://back:8000
+      # adresses vues par le navigateur ; vides = même origine (derrière un reverse proxy)
+      URL_API: ${URL_API-http://localhost:8000}
+      URL_QR: ${URL_QR-http://localhost:8001}
+      URL_VERIFICATION: ${URL_VERIFICATION-http://localhost:8002}
+    ports:
+      - "127.0.0.1:${FRONT_PORT:-8080}:8080"
+    depends_on:
+      - back
+    restart: unless-stopped
+
+  back:
+    build: ./back
+    environment:
+      <<: *secrets
+      DATABASE_URL: postgresql+asyncpg://cinetint:${POSTGRES_PASSWORD:-cinetint}@postgres:5432/cinetint
+      REDIS_URL: redis://redis:6379/0
+      QR_GENERATOR_URL: http://qr-generator:8001
+      GERANT_MOT_DE_PASSE: ${GERANT_MOT_DE_PASSE:-gerant}
+      CONTROLEUR_MOT_DE_PASSE: ${CONTROLEUR_MOT_DE_PASSE:-controleur}
+    ports:
+      - "127.0.0.1:${BACK_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  qr-generator:
+    build: ./qr-generator
+    environment:
+      <<: *secrets
+    volumes:
+      - cles:/data
+    ports:
+      - "127.0.0.1:${QR_GENERATOR_PORT:-8001}:8001"
+    restart: unless-stopped
+
+  qr-verifier:
+    build: ./qr-verifier
+    environment:
+      <<: *secrets
+      BACK_URL: http://back:8000
+      QR_GENERATOR_URL: http://qr-generator:8001
+    ports:
+      - "127.0.0.1:${QR_VERIFIER_PORT:-8002}:8002"
+    depends_on:
+      - qr-generator
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: cinetint
+      POSTGRES_USER: cinetint
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cinetint}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cinetint -d cinetint"]
+      interval: 5s
+      retries: 12
+    restart: unless-stopped
+
+  redis:
+    image: redis:8-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 12
+    restart: unless-stopped
+
+  # docker compose --profile tests run --rm back-tests
+  back-tests:
+    profiles: ["tests"]
+    build:
+      context: ./back
+      target: tests
+    environment:
+      DATABASE_URL: postgresql+asyncpg://cinetint:${POSTGRES_PASSWORD:-cinetint}@postgres:5432/cinetint_tests
+      REDIS_URL: redis://redis:6379/5
+      QR_GENERATOR_URL: http://qr-generator:8001
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-dev-service-token}
+      DONNEES_DEMO: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qr-generator:
+        condition: service_started
+
+  qr-generator-tests:
+    profiles: ["tests"]
+    build:
+      context: ./qr-generator
+      target: tests
+
+  qr-verifier-tests:
+    profiles: ["tests"]
+    build:
+      context: ./qr-verifier
+      target: tests
+
+volumes:
+  postgres:
+  cles:
