@@ -1213,3 +1213,100 @@ a.horaire:hover {
 .mode-borne .horaire__heure {
   font-size: 40px;
 }
+
+/* ---------- infos pratiques */
+
+.infos-entete {
+  display: grid;
+  gap: 10px;
+  padding-block: 56px 24px;
+}
+
+.infos-entete__surtitre {
+  margin: 0;
+  color: var(--or);
+  font-family: var(--police-titre);
+  font-size: 18px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.infos-entete__titre {
+  margin: 0;
+  font-size: clamp(44px, 7vw, 84px);
+  font-weight: 200;
+  line-height: 1;
+}
+
+.infos-entete__texte {
+  max-width: 60ch;
+  margin: 0;
+  color: var(--texte-doux);
+}
+
+.infos {
+  display: grid;
+  gap: 16px;
+  padding-block: 24px 56px;
+}
+
+@media (min-width: 900px) {
+  .infos {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.infos__carte {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  padding: 28px 28px 32px;
+  border-radius: var(--rayon-carte);
+  background: var(--surface);
+  border: 1px solid rgba(58, 52, 42, 0.8);
+}
+
+.infos__titre {
+  margin: 0;
+  color: var(--or);
+  font-size: 30px;
+  font-weight: 300;
+}
+
+.infos__adresse {
+  font-style: normal;
+  font-family: var(--police-meta);
+  font-size: 19px;
+  line-height: 1.5;
+}
+
+.infos__liste {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.infos__liste div {
+  display: grid;
+  gap: 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--filet);
+}
+
+.infos__liste dt {
+  color: var(--texte-doux);
+  font-family: var(--police-titre);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.infos__liste dd {
+  margin: 0;
+}
+
+.infos__liste a {
+  color: var(--or);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

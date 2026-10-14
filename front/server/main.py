@@ -1,6 +1,6 @@
 """Service front.
 
-Les pages du catalogue (accueil, fiche film, borne) sont rendues ici côté
+Les pages du catalogue (accueil, fiche film, borne, infos pratiques) sont rendues ici côté
 serveur à partir de l'API : elles s'affichent vite et sont lisibles par les
 moteurs de recherche. Le reste (plan de salle, paiement, billets, contrôle,
 back-office) est l'application React, servie par la même page d'accueil HTML.
@@ -259,6 +259,16 @@ async def accueil(request: Request):
 async def fiche_film(request: Request, film_id: int):
     film = await lire_api(f"/api/films/{film_id}")
     return rendre(request, "film.html", film=film, jours=par_jour(film["seances"]))
+
+
+@app.get("/infos", response_class=HTMLResponse)
+async def infos(request: Request):
+    """Accès, horaires et grille des tarifs (lue dans l'API, comme sur l'accueil)."""
+    try:
+        grille = await lire_api("/api/tarifs", duree=60)
+    except HTTPException:
+        grille = []
+    return rendre(request, "infos.html", grille=grille)
 
 
 @app.get("/borne", response_class=HTMLResponse)
