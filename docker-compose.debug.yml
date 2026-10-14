@@ -1,0 +1,21 @@
+# Publie chaque service sur l'hôte, pour le débogage seulement (curl, documentation interactive).
+# Le fonctionnement normal passe par le proxy (docker-compose.yml, http://localhost/).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d
+#
+# Le serveur de production, dont le nginx route déjà par préfixe vers ces ports, s'en sert aussi
+# (variables FRONT_PORT, BACK_PORT, QR_GENERATOR_PORT, QR_VERIFIER_PORT du fichier .env).
+
+services:
+  front:
+    ports:
+      - "127.0.0.1:${FRONT_PORT:-8080}:8080"
+  back:
+    ports:
+      - "127.0.0.1:${BACK_PORT:-8000}:8000"
+  qr-generator:
+    ports:
+      - "127.0.0.1:${QR_GENERATOR_PORT:-8001}:8001"
+  qr-verifier:
+    ports:
+      - "127.0.0.1:${QR_VERIFIER_PORT:-8002}:8002"

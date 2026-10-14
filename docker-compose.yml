@@ -1,23 +1,68 @@
 name: cinetint
 
+# Un seul point d'entrée : le proxy nginx (http://localhost/). Deux réseaux Docker :
+#   front : le proxy et les quatre services applicatifs
+#   back  : le back, PostgreSQL et Redis (la base n'est joignable que par le back)
+
 x-secrets: &secrets
   SERVICE_TOKEN: ${SERVICE_TOKEN:-dev-service-token}
   JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-a-changer-en-production}
-  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost,http://127.0.0.1}
 
 services:
+  proxy:
+    image: nginx:1.30.5-alpine
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      # seul port publié de la pile ; en production le port 80 est pris par le nginx du serveur : PROXY_PORT=8790
+      - "127.0.0.1:${PROXY_PORT:-80}:80"
+    networks:
+      - front
+    depends_on:
+      front:
+        condition: service_healthy
+      back:
+        condition: service_healthy
+      qr-generator:
+        condition: service_healthy
+      qr-verifier:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/nginx-sante"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 64M
+    restart: unless-stopped
+
   front:
     build: ./front
     environment:
       API_INTERNE: http://back:8000
-      # adresses vues par le navigateur ; vides = même origine (derrière un reverse proxy)
-      URL_API: ${URL_API-http://localhost:8000}
-      URL_QR: ${URL_QR-http://localhost:8001}
-      URL_VERIFICATION: ${URL_VERIFICATION-http://localhost:8002}
-    ports:
-      - "127.0.0.1:${FRONT_PORT:-8080}:8080"
+      # adresses vues par le navigateur ; vides = même origine, c'est-à-dire le proxy
+      URL_API: ${URL_API:-}
+      URL_QR: ${URL_QR:-}
+      URL_VERIFICATION: ${URL_VERIFICATION:-}
+    networks:
+      - front
     depends_on:
       - back
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8080/sante', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
     restart: unless-stopped
 
   back:
@@ -29,13 +74,26 @@ services:
       QR_GENERATOR_URL: http://qr-generator:8001
       GERANT_MOT_DE_PASSE: ${GERANT_MOT_DE_PASSE:-gerant}
       CONTROLEUR_MOT_DE_PASSE: ${CONTROLEUR_MOT_DE_PASSE:-controleur}
-    ports:
-      - "127.0.0.1:${BACK_PORT:-8000}:8000"
+    networks:
+      - front
+      - back
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/sante', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      # migrations, fixtures et premier import de la programmation avant que l'API réponde
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
     restart: unless-stopped
 
   qr-generator:
@@ -44,8 +102,19 @@ services:
       <<: *secrets
     volumes:
       - cles:/data
-    ports:
-      - "127.0.0.1:${QR_GENERATOR_PORT:-8001}:8001"
+    networks:
+      - front
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8001/qr/sante', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
     restart: unless-stopped
 
   qr-verifier:
@@ -54,10 +123,21 @@ services:
       <<: *secrets
       BACK_URL: http://back:8000
       QR_GENERATOR_URL: http://qr-generator:8001
-    ports:
-      - "127.0.0.1:${QR_VERIFIER_PORT:-8002}:8002"
+    networks:
+      - front
     depends_on:
       - qr-generator
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8002/verification/sante', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
     restart: unless-stopped
 
   postgres:
@@ -68,18 +148,32 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cinetint}
     volumes:
       - postgres:/var/lib/postgresql/data
+    networks:
+      - back
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U cinetint -d cinetint"]
       interval: 5s
       retries: 12
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
     restart: unless-stopped
 
   redis:
     image: redis:8-alpine
+    networks:
+      - back
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       retries: 12
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
     restart: unless-stopped
 
   # docker compose --profile tests run --rm back-tests
@@ -95,6 +189,9 @@ services:
       SERVICE_TOKEN: ${SERVICE_TOKEN:-dev-service-token}
       DONNEES_DEMO: "false"
       PROGRAMME_SOURCE: aucune
+    networks:
+      - front
+      - back
     depends_on:
       postgres:
         condition: service_healthy
@@ -108,12 +205,30 @@ services:
     build:
       context: ./qr-generator
       target: tests
+    networks:
+      - front
 
   qr-verifier-tests:
     profiles: ["tests"]
     build:
       context: ./qr-verifier
       target: tests
+    networks:
+      - front
+
+  front-tests:
+    profiles: ["tests"]
+    build:
+      context: ./front
+      target: tests
+    networks:
+      - front
+
+networks:
+  front:
+    driver: bridge
+  back:
+    driver: bridge
 
 volumes:
   postgres:
