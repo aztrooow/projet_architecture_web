@@ -11,7 +11,7 @@ from . import qr_client
 from .config import settings
 from .db import engine
 from .initialisation import entretien_periodique, initialiser
-from .routes import admin, auth, catalogue, commandes, interne
+from .routes import admin, auth, catalogue, commandes, donnees, interne
 from .temps_reel import diffuseur, redis
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -48,7 +48,7 @@ if settings.cors_origins:
         allow_headers=["*"],
     )
 
-for module in (catalogue, commandes, auth, admin, interne):
+for module in (catalogue, commandes, auth, admin, donnees, interne):
     app.include_router(module.router)
 
 

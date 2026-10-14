@@ -1,4 +1,8 @@
-"""Création du schéma et données de démonstration.
+"""Données de référence (fixtures) et programmation des séances.
+
+Le schéma est créé par les migrations Alembic (voir migrations/ et
+entrypoint.sh), pas ici. Le chargement des fixtures est lancé au démarrage du
+conteneur par app/fixtures.py.
 
 Plusieurs instances de l'API peuvent démarrer en même temps : un verrou
 consultatif PostgreSQL garantit qu'une seule initialise la base.
@@ -17,9 +21,8 @@ from sqlalchemy import func, select, text
 from . import programmation_cgr, remplissage, tarifs
 from .auth import hasher
 from .config import settings
-from .db import SessionLocal, engine
+from .db import SessionLocal
 from .models import (
-    Base,
     Billet,
     Categorie,
     Commande,
@@ -134,12 +137,6 @@ def regles(evenement_id: int) -> list[dict]:
         dict(libelle="Terminator grandeur nature, tarif unique", prix_centimes=2500, priorite=100,
              evenement_id=evenement_id),
     ]
-
-
-async def creer_schema() -> None:
-    async with engine.begin() as conn:
-        await conn.execute(text("SELECT pg_advisory_xact_lock(:v)"), {"v": VERROU_INIT})
-        await conn.run_sync(Base.metadata.create_all)
 
 
 async def creer_comptes(session) -> None:
@@ -360,13 +357,7 @@ async def completer_programmation(jours: int = 8) -> None:
 
 
 async def initialiser() -> None:
-    await creer_schema()
-    async with SessionLocal() as session:
-        await session.execute(text("SELECT pg_advisory_xact_lock(:v)"), {"v": VERROU_INIT})
-        await creer_comptes(session)
-        if settings.donnees_demo and not await session.scalar(select(func.count()).select_from(Salle)):
-            await creer_donnees_demo(session)
-        await session.commit()
+    """Au démarrage de l'API : programmation des séances (les fixtures sont déjà chargées)."""
     if settings.donnees_demo:
         await completer_programmation()
 
