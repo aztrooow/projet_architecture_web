@@ -10,10 +10,13 @@ Version en ligne : **https://fisa.eclipse-technology.eu**
 | Programme et réservation | [/](https://fisa.eclipse-technology.eu/) |
 | Borne du hall (mode kiosque) | [/borne](https://fisa.eclipse-technology.eu/borne) |
 | Contrôle des billets | [/controle](https://fisa.eclipse-technology.eu/controle) |
+| Infos pratiques (accès, horaires, tarifs) | [/infos](https://fisa.eclipse-technology.eu/infos) |
 | Espace gérant | [/admin](https://fisa.eclipse-technology.eu/admin) |
+| Données de chaque table (gérant) | [/admin/donnees](https://fisa.eclipse-technology.eu/admin/donnees) |
+| Données en JSON | [/api/donnees](https://fisa.eclipse-technology.eu/api/donnees) |
 | Documentation de l'API | [/api/docs](https://fisa.eclipse-technology.eu/api/docs) |
 
-Documentation technique : [docs/architecture.md](docs/architecture.md) (schéma, technologies, échanges entre services, données, déploiement). Schémas : [base de données](docs/base-de-donnees.svg), [infrastructure Docker](docs/infrastructure-docker.svg). Réponses aux questions du cours : [docs/questions-cours.md](docs/questions-cours.md).
+Documentation technique : [docs/architecture.md](docs/architecture.md) (schéma, technologies, échanges entre services, données, déploiement). Schémas : [base de données](docs/base-de-donnees.svg), [infrastructure Docker](docs/infrastructure-docker.svg). Réponses aux questions du cours : [docs/questions-cours.md](docs/questions-cours.md). Kubernetes (défis, charte Helm, images) : [k8s/README.md](k8s/README.md) et [section 11 bis](#11-bis-kubernetes).
 
 ---
 
@@ -449,18 +452,44 @@ Sur le serveur, le port 80 appartient déjà au nginx de l'hôte : le fichier `.
 | Recueil du besoin | Entretien avec le gérant, décisions ci-dessus, spécification | fait |
 | Implémentation | Les quatre services, la base, les tests, un conteneur par service | fait |
 | Mise en ligne | Docker Compose derrière nginx sur fisa.eclipse-technology.eu | fait |
-| Kubernetes | Voir ci-dessous | à venir |
+| Kubernetes | Défis 1 à 20 (sauf 17), charte Helm, intégration continue : voir ci-dessous | prêt, à déployer sur le cluster du cours |
 
-Passage sous Kubernetes, prévu pour la suite du cours :
+## 11 bis. Kubernetes
 
-- un `Deployment` et un `Service` par service applicatif, le back en plusieurs répliques (il est sans état) avec un `HorizontalPodAutoscaler` pour les pics du week-end ;
-- un `Ingress` qui reprend le routage par préfixe ci-dessus, sans jamais exposer `/internal` ;
-- les secrets (`JWT_SECRET`, `SERVICE_TOKEN`, clé Ed25519 montée en fichier) dans des `Secret`, le reste dans un `ConfigMap` ;
-- PostgreSQL en `StatefulSet` avec volume persistant, Redis à côté ;
-- les sondes `readiness` et `liveness` sur `/api/sante`, `/qr/sante`, `/verification/sante` et `/sante` ;
-- une `NetworkPolicy` qui limite les appels `/internal` aux services eux-mêmes.
+Tout le travail Kubernetes est dans [`k8s/`](k8s/README.md) : un dossier par défi du [sujet](https://github.com/DF-Telecom-SudParis/CSC8567-Final) (manifests ou commandes, schéma d'infrastructure, réponses aux questions), la charte Helm [`k8s/helm/cinetint`](k8s/helm/cinetint) et les scripts d'images, d'application et de rendu. Chaque défi a été vérifié sur un cluster local (kind, un nœud maître et deux nœuds de travail) ; les preuves sont dans la section « Vérifié sur cluster local » de chaque `reponses.md`.
 
-Le démarrage de plusieurs répliques du back en même temps est déjà prévu : les migrations Alembic, le chargement des fixtures et l'import de la programmation sont protégés par un verrou consultatif PostgreSQL.
+Images publiques (registre GitHub, téléchargeables sans compte) :
+
+| Image | Versions | Adresse |
+|---|---|---|
+| front | v1, v2 (page Infos pratiques, défi 8) | [ghcr.io/eldertek/cinetint-front](https://github.com/users/eldertek/packages/container/package/cinetint-front) |
+| back | v1, v2, v3 (migration sans interruption, défi 20) | [ghcr.io/eldertek/cinetint-back](https://github.com/users/eldertek/packages/container/package/cinetint-back) |
+| qr-generator | v1, v2 | [ghcr.io/eldertek/cinetint-qr-generator](https://github.com/users/eldertek/packages/container/package/cinetint-qr-generator) |
+| qr-verifier | v1, v2 | [ghcr.io/eldertek/cinetint-qr-verifier](https://github.com/users/eldertek/packages/container/package/cinetint-qr-verifier) |
+
+| Défi | Contenu |
+|---|---|
+| [1](k8s/defi1) | Premier Pod, `port-forward` |
+| [2](k8s/defi2) | Deployment de 3 répliques, Service ClusterIP, `kubectl proxy`, ressources |
+| [3](k8s/defi3) | Site (Pod front + back) et base PostgreSQL dans deux Deployments |
+| [4](k8s/defi4) | Ingress vers `django.<groupe>.csc8567.luxbulb.org` |
+| [5](k8s/defi5) | Infrastructure complète : front, back, QR, Redis, PostgreSQL, Ingress |
+| [6](k8s/defi6) | Charte Helm, ConfigMap de connexion à la base |
+| [7](k8s/defi7) | PostgreSQL en StatefulSet, volume persistant, service headless |
+| [8](k8s/defi8) | Mise à jour progressive (Rolling Update) v1 vers v2 sans erreur |
+| [9](k8s/defi9) | Mise à l'échelle automatique (HPA, 60 % CPU, 10 Pods au plus) |
+| [10](k8s/defi10) | Sondes liveness, readiness et startup adaptées à chaque conteneur |
+| [11](k8s/defi11) | NetworkPolicy : seul le back joint la base |
+| [12](k8s/defi12) | PostgreSQL maître / réplique en réplication en flux, écrit à la main |
+| [13](k8s/defi13) | Bonus : la réplication en sous-charte Helm |
+| [14](k8s/defi14) | Bonus : Redis (verrous de sièges, temps réel) |
+| [15](k8s/defi15) | Bonus : hooks Helm (ConfigMap, sauvegardes avant et après mise à jour) |
+| [16](k8s/defi16) | Bonus : sauvegarde planifiée (CronJob) et restauration |
+| [18](k8s/defi18) | Bonus : durcissement (non root, lecture seule, limites de débit) |
+| [19](k8s/defi19) | Bonus : intégration continue ([workflow](.github/workflows/ci.yml)) |
+| [20](k8s/defi20) | Bonus : migration de la base sans interruption (expand / contract) |
+
+Le démarrage de plusieurs répliques du back en même temps est prévu : les migrations Alembic, le chargement des fixtures et l'import de la programmation sont protégés par un verrou consultatif PostgreSQL. Démarrage sur le cluster du cours, ordre d'application et commandes de démonstration : [k8s/README.md](k8s/README.md).
 
 ---
 
