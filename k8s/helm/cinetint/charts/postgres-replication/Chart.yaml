@@ -1,0 +1,6 @@
+apiVersion: v2
+name: postgres-replication
+description: PostgreSQL en réplication en flux (streaming replication) maître/réplique, écrite à la main (sans charte tierce)
+type: application
+version: 0.1.0
+appVersion: "17"

@@ -1,0 +1,112 @@
+# Les répliques (les « esclaves ») : un StatefulSet, un volume par pod.
+#
+# Au premier démarrage, l'initContainer copie le primaire avec pg_basebackup (copie de base + WAL pendant la copie).
+# L'option -R écrit standby.signal (« démarre en réplique ») et primary_conninfo (« où lire le journal »)
+# dans le dossier de données. PostgreSQL démarre ensuite en « hot standby » : il rejoue en continu
+# le journal que le primaire lui envoie (processus walsender -> walreceiver) et accepte les lectures.
+# Un slot de réplication par pod garantit que le primaire garde le journal tant que la réplique ne l'a pas lu.
+# Aux redémarrages suivants, les données sont déjà là : l'initContainer ne fait rien.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-replique
+  labels: {app: postgres, role: replique}
+spec:
+  replicas: 1
+  serviceName: postgres-replique
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels: {app: postgres, role: replique}
+  template:
+    metadata:
+      labels: {app: postgres, role: replique}
+    spec:
+      initContainers:
+        - name: copie-du-primaire
+          image: postgres:17-alpine
+          env:
+            - {name: POSTGRES_USER, value: cinetint}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: postgres-secrets, key: POSTGRES_PASSWORD}
+            - {name: REPLICATION_USER, value: replicateur}
+            - name: REPLICATION_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: postgres-secrets, key: REPLICATION_PASSWORD}
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+            - {name: PRIMAIRE, value: postgres-primaire-0.postgres-primaire}
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              if [ -s "$PGDATA/PG_VERSION" ]; then
+                echo "[replique] données déjà présentes, pas de nouvelle copie"
+                exit 0
+              fi
+              echo "[replique] attente du primaire $PRIMAIRE"
+              until pg_isready -q -h "$PRIMAIRE" -p 5432 -U "$POSTGRES_USER"; do sleep 2; done
+              slot="$(echo "$HOSTNAME" | tr '-' '_')"
+              PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$PRIMAIRE" -U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1 -c \
+                "SELECT pg_create_physical_replication_slot('$slot') WHERE NOT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = '$slot')"
+              mkdir -p "$PGDATA"
+              chmod 700 "$PGDATA"
+              echo "[replique] copie de base depuis le primaire (slot $slot)"
+              PGPASSWORD="$REPLICATION_PASSWORD" PGAPPNAME="$HOSTNAME" pg_basebackup \
+                -h "$PRIMAIRE" -p 5432 -U "$REPLICATION_USER" -D "$PGDATA" \
+                -X stream -S "$slot" -R -P -v
+              echo "[replique] copie terminée"
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 200m, memory: 200Mi}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          # mêmes réglages que le primaire : max_connections d'une réplique doit être >= à celui du primaire
+          args:
+            - -c
+            - hot_standby=on
+            - -c
+            - hot_standby_feedback=on
+            - -c
+            - max_wal_senders=5
+            - -c
+            - max_replication_slots=5
+            - -c
+            - max_connections=100
+            - -c
+            - shared_buffers=32MB
+            - -c
+            - max_wal_size=48MB
+            - -c
+            - min_wal_size=32MB
+            - -c
+            - listen_addresses=*
+          env:
+            - {name: POSTGRES_DB, value: cinetint}
+            - {name: POSTGRES_USER, value: cinetint}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: postgres-secrets, key: POSTGRES_PASSWORD}
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+          ports:
+            - {name: postgres, containerPort: 5432}
+          resources:
+            requests: {cpu: 100m, memory: 100Mi}
+            limits: {cpu: 200m, memory: 200Mi}
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            periodSeconds: 5
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 100Mi

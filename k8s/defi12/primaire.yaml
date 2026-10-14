@@ -1,0 +1,78 @@
+# Le primaire (le « maître ») : un StatefulSet d'un seul pod, avec son volume de 0.1 Go.
+# wal_level=replica : le journal (WAL) contient assez d'information pour être rejoué sur une copie.
+# max_wal_senders / max_replication_slots : nombre de réplicas qui peuvent se brancher.
+# max_slot_wal_keep_size : le volume ne fait que 100Mi, un slot en retard ne doit pas le remplir.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-primaire
+  labels: {app: postgres, role: primaire}
+spec:
+  replicas: 1
+  serviceName: postgres-primaire
+  selector:
+    matchLabels: {app: postgres, role: primaire}
+  template:
+    metadata:
+      labels: {app: postgres, role: primaire}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          args:
+            - -c
+            - wal_level=replica
+            - -c
+            - max_wal_senders=5
+            - -c
+            - max_replication_slots=5
+            - -c
+            - hot_standby=on
+            - -c
+            - max_slot_wal_keep_size=32MB
+            - -c
+            - max_connections=100
+            - -c
+            - shared_buffers=32MB
+            - -c
+            - max_wal_size=48MB
+            - -c
+            - min_wal_size=32MB
+            - -c
+            - listen_addresses=*
+          env:
+            - {name: POSTGRES_DB, value: cinetint}
+            - {name: POSTGRES_USER, value: cinetint}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: postgres-secrets, key: POSTGRES_PASSWORD}
+            - {name: REPLICATION_USER, value: replicateur}
+            - name: REPLICATION_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: postgres-secrets, key: REPLICATION_PASSWORD}
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+          ports:
+            - {name: postgres, containerPort: 5432}
+          resources:
+            requests: {cpu: 100m, memory: 100Mi}
+            limits: {cpu: 200m, memory: 200Mi}
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            periodSeconds: 5
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+            - {name: init, mountPath: /docker-entrypoint-initdb.d, readOnly: true}
+      volumes:
+        - name: init
+          configMap:
+            name: postgres-init
+            defaultMode: 0555
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 100Mi

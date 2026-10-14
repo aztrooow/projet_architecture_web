@@ -1,0 +1,65 @@
+# front : pages rendues côté serveur (Jinja) et application React. Ne détient aucune donnée,
+# il lit le catalogue dans le back. Sans état : 3 répliques derrière un Service ClusterIP.
+{{- $nom := include "cinetint.nom" (dict "ctx" . "n" "front") }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $nom }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "front") | nindent 4 }}
+spec:
+  {{- include "cinetint.repliques" (dict "ctx" . "c" "front" "n" .Values.front.replicas) | nindent 2 }}
+  {{- include "cinetint.miseAJour" . | nindent 2 }}
+  selector:
+    matchLabels:
+      {{- include "cinetint.selecteur" (dict "ctx" . "c" "front") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "cinetint.labels" (dict "ctx" . "c" "front") | nindent 8 }}
+      annotations:
+        # un changement de ConfigMap relance les pods (sinon ils garderaient l'ancienne valeur)
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- include "cinetint.pullSecrets" . | nindent 6 }}
+      automountServiceAccountToken: false
+      {{- include "cinetint.secPod" (dict "ctx" . "uid" 1000) | nindent 6 }}
+      {{- include "cinetint.repartition" (dict "ctx" . "c" "front") | nindent 6 }}
+      containers:
+        - name: front
+          image: {{ include "cinetint.image" (dict "ctx" . "nom" "cinetint-front" "tag" .Values.images.tags.front) }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.front.port }}
+          env:
+            {{- include "cinetint.envConfig" (dict "ctx" . "cles" (list "API_INTERNE" "URL_API" "URL_QR" "URL_VERIFICATION")) | nindent 12 }}
+          resources:
+            {{- include "cinetint.ressources" (dict "ctx" . "comp" .Values.front) | nindent 12 }}
+          {{- include "cinetint.sondesHttp" (dict "ctx" . "chemin" "/sante" "port" "http") | nindent 10 }}
+          lifecycle:
+            # laisse le temps au Service et à l'Ingress de retirer le pod avant son arrêt (aucune requête perdue)
+            preStop:
+              exec:
+                command: ["sleep", "5"]
+          {{- include "cinetint.secConteneur" . | nindent 10 }}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $nom }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "front") | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "cinetint.selecteur" (dict "ctx" . "c" "front") | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.front.port }}
+      targetPort: http

@@ -1,0 +1,25 @@
+# Défi 5 : infrastructure complète. Remplacer u-XXX et le nom de groupe.
+
+# 0. repartir d'un namespace propre (retirer les ressources des défis 3 et 4)
+NAMESPACE=u-XXX ./k8s/appliquer.sh defi4 supprimer
+
+# 1. images des quatre services (une fois)
+REGISTRE=ghcr.io/eldertek ./k8s/images.sh tout
+
+# 2. Secrets : mots de passe, jeton de service, clé Ed25519 des billets (commune aux répliques du qr-generator)
+NAMESPACE=u-XXX ./k8s/appliquer.sh secrets
+
+# 3. tous les manifests du dossier : front, back, qr-generator, qr-verifier, redis, postgres, ingress
+NAMESPACE=u-XXX REGISTRE=ghcr.io/eldertek HOTE=django.MONGROUPE.csc8567.luxbulb.org ./k8s/appliquer.sh defi5
+
+# 4. vérification
+kubectl get deploy,pods,svc,ingress -n u-XXX -o wide
+kubectl top pods -n u-XXX --containers
+kubectl get endpoints -n u-XXX
+
+# 5. parcours complet par l'Ingress (achat, QR code, contrôle d'entrée, /internal fermé)
+python3 k8s/outils/parcours.py https://django.MONGROUPE.csc8567.luxbulb.org \
+  --controleur "$(kubectl get secret cinetint-secrets -n u-XXX -o jsonpath='{.data.CONTROLEUR_MOT_DE_PASSE}' | base64 -d)"
+
+# mot de passe du back-office (identifiant : gerant)
+kubectl get secret cinetint-secrets -n u-XXX -o jsonpath='{.data.GERANT_MOT_DE_PASSE}' | base64 -d; echo

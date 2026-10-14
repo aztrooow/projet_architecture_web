@@ -1,0 +1,51 @@
+# Défi 16 : sauvegarde planifiée (CronJob) vers un volume dédié, restauration testée.
+# Valeurs cumulatives : ce fichier contient l'état complet voulu à la fin du défi.
+# Utilisation : helm upgrade --install cinetint ../helm/cinetint -n u-XXX -f ../helm/cinetint/values-cours.yaml -f values-defi16.yaml
+
+global:
+  securite: false
+
+postgres:
+  mode: statefulset
+  persistance:
+    enabled: true
+
+postgres-replication:
+  enabled: true
+
+images:
+  tags:
+    front: v2
+    back: v1
+    qrGenerator: v1
+    qrVerifier: v1
+
+sondes:
+  startup: {enabled: true}
+  readiness: {enabled: true}
+  liveness: {enabled: true}
+
+hpa:
+  enabled: true
+
+networkPolicies:
+  postgres:
+    enabled: true
+  applicatives:
+    enabled: true
+
+ingress:
+  limites:
+    enabled: false
+
+hooks:
+  configMap:
+    enabled: true
+  sauvegarde:
+    enabled: true
+  testFumee:
+    enabled: true
+
+sauvegardes:
+  enabled: true
+  planifiee: true

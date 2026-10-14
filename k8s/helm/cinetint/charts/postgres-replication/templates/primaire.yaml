@@ -1,0 +1,66 @@
+{{- if .Values.enabled }}
+# Primaire : un StatefulSet d'un seul pod, son volume de 0.1 Go, wal_level=replica.
+{{- $nom := include "pgr.nom" (dict "ctx" . "n" "postgres-primaire") }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $nom }}
+  labels:
+    {{- include "pgr.labels" (dict "ctx" . "role" "primaire") | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: {{ $nom }}
+  selector:
+    matchLabels:
+      {{- include "pgr.selecteur" (dict "ctx" . "role" "primaire") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "pgr.labels" (dict "ctx" . "role" "primaire") | nindent 8 }}
+      annotations:
+        checksum/init: {{ include (print $.Template.BasePath "/configmap-init.yaml") . | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+      {{- include "pgr.secPod" . | nindent 6 }}
+      containers:
+        - name: postgres
+          image: {{ .Values.image }}
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          args:
+            {{- include "pgr.args" . | nindent 12 }}
+          env:
+            {{- include "pgr.env" . | nindent 12 }}
+          ports:
+            - {name: postgres, containerPort: 5432}
+          resources:
+            {{- toYaml .Values.ressources | nindent 12 }}
+          {{- include "pgr.sondes" . | nindent 10 }}
+          {{- include "pgr.secConteneur" . | nindent 10 }}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+            - {name: init, mountPath: /docker-entrypoint-initdb.d, readOnly: true}
+            - {name: run, mountPath: /var/run/postgresql}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: init
+          configMap:
+            name: {{ include "pgr.nom" (dict "ctx" . "n" "postgres-replication-init") }}
+            defaultMode: 0555
+        - name: run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "pgr.labels" (dict "ctx" . "role" "primaire") | nindent 10 }}
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- with .Values.persistance.storageClass }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistance.taille }}
+{{- end }}

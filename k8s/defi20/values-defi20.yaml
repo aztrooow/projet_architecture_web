@@ -1,0 +1,52 @@
+# Défi 20 : migrations de base de données sans interruption (expand / contract avec Alembic).
+# Base de départ : l'état final du Défi 18 avec l'image back v2 (Alembic lancé par entrypoint.sh à chaque démarrage).
+# La mise à jour vers la v3 (colonne ajoutée par la migration 0002) se fait ensuite avec --set images.tags.back=v3.
+# Utilisation : helm upgrade --install cinetint ../helm/cinetint -n u-XXX -f ../helm/cinetint/values-cours.yaml -f values-defi20.yaml
+
+global:
+  securite: true
+
+postgres:
+  mode: statefulset
+  persistance:
+    enabled: true
+
+postgres-replication:
+  enabled: true
+
+images:
+  tags:
+    front: v2
+    back: v2
+    qrGenerator: v1
+    qrVerifier: v1
+
+sondes:
+  startup: {enabled: true}
+  readiness: {enabled: true}
+  liveness: {enabled: true}
+
+hpa:
+  enabled: true
+
+networkPolicies:
+  postgres:
+    enabled: true
+  applicatives:
+    enabled: true
+
+ingress:
+  limites:
+    enabled: true
+
+hooks:
+  configMap:
+    enabled: true
+  sauvegarde:
+    enabled: true
+  testFumee:
+    enabled: true
+
+sauvegardes:
+  enabled: true
+  planifiee: true

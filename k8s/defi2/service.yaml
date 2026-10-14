@@ -1,0 +1,17 @@
+# Défi 2 : un Service ClusterIP devant les 3 pods.
+# Il crée une IP virtuelle interne au cluster (réseau des services, 10.43.0.0/16), une entrée DNS
+# csc8567.<namespace>.svc.cluster.local, et répartit les connexions entre les pods dont l'étiquette
+# correspond au selector. kube-proxy installe les règles iptables qui réalisent la répartition.
+apiVersion: v1
+kind: Service
+metadata:
+  name: csc8567
+  labels:
+    app: csc8567
+spec:
+  type: ClusterIP
+  selector:
+    app: csc8567
+  ports:
+    - port: 80            # port du Service (IP virtuelle). Port sans nom : l'URL de proxy .../services/csc8567/proxy/ l'exige
+      targetPort: 5000    # port des pods

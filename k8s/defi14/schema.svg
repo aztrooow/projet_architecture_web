@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000" font-family="Verdana, 'DejaVu Sans', 'Segoe UI', Arial, sans-serif">
+<title>Défi 14 : Redis, verrous de sièges, compteurs et diffusion en direct</title>
+<defs>
+<marker id="m-bleu" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6f8fb0"/></marker>
+<marker id="m-gris" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8a8377"/></marker>
+<marker id="m-or" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0965e"/></marker>
+<marker id="m-rouge" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c4584c"/></marker>
+</defs>
+<rect width="1600" height="1000" rx="16" fill="#0c0b09"/>
+<text x="50" y="46"><tspan fill="#c0965e" font-size="24" font-weight="600" letter-spacing="3">CINETINT</tspan><tspan dx="16" fill="#a39c90" font-size="15">défi 14 : un Redis, trois usages (verrous, compteurs, pub/sub), plan de salle en direct par SSE</tspan></text>
+<rect x="40" y="100" width="260" height="150" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="54" y="124" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Navigateur A</tspan></text>
+<path d="M40,134 L300,134" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="54" y="155" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">plan de salle de la séance</tspan></text>
+<text x="54" y="174" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">EventSource : flux SSE</tspan></text>
+<rect x="40" y="290" width="260" height="150" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="54" y="314" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Navigateur B</tspan></text>
+<path d="M40,324 L300,324" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="54" y="345" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">un autre spectateur</tspan></text>
+<text x="54" y="364" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">reçoit la même mise à jour</tspan></text>
+<rect x="340" y="100" width="220" height="340" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="354" y="124" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Ingress puis Service back</tspan></text>
+<path d="M340,134 L560,134" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="354" y="155" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">/api -&gt; back:8000</tspan></text>
+<text x="354" y="174" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">10.43.201.5, 3 pods</tspan></text>
+<text x="354" y="193" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">le flux SSE repasse ici</tspan></text>
+<text x="354" y="212" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">proxy-buffering off,</tspan></text>
+<text x="354" y="231" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">délai de lecture 3600 s</tspan></text>
+<path d="M340,175 L300,175" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<path d="M340,365 L300,365" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<rect x="300.68" y="195" width="38.64" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="320" y="209.2" text-anchor="middle"><tspan fill="#d9b886" font-size="12" font-weight="400">SSE</tspan></text>
+<rect x="600" y="100" width="400" height="136" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="2"/>
+<text x="614" y="122" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">back-7c5b9-h4n6r</tspan><tspan fill="#d9b886" font-size="12" font-weight="400">   10.42.1.21</tspan></text>
+<text x="614" y="148" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">réservation : SET verrou NX EX 600</tspan></text>
+<text x="614" y="168" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">changement : PUBLISH seance:&lt;id&gt;</tspan></text>
+<text x="614" y="188" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">UNE connexion SUBSCRIBE, relais en SSE</tspan></text>
+<path d="M600,168 L560,168" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<rect x="600" y="252" width="400" height="136" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="2"/>
+<text x="614" y="274" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">back-7c5b9-j8v3d</tspan><tspan fill="#d9b886" font-size="12" font-weight="400">   10.42.2.23</tspan></text>
+<text x="614" y="300" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">réservation : SET verrou NX EX 600</tspan></text>
+<text x="614" y="320" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">changement : PUBLISH seance:&lt;id&gt;</tspan></text>
+<text x="614" y="340" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">UNE connexion SUBSCRIBE, relais en SSE</tspan></text>
+<path d="M600,320 L560,320" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<rect x="600" y="404" width="400" height="136" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="2"/>
+<text x="614" y="426" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">back-7c5b9-q2l7s</tspan><tspan fill="#d9b886" font-size="12" font-weight="400">   10.42.2.24</tspan></text>
+<text x="614" y="452" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">réservation : SET verrou NX EX 600</tspan></text>
+<text x="614" y="472" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">changement : PUBLISH seance:&lt;id&gt;</tspan></text>
+<text x="614" y="492" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">UNE connexion SUBSCRIBE, relais en SSE</tspan></text>
+<path d="M600,472 L560,472" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<text x="1090" y="90" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">commandes : SET NX EX, INCR, PUBLISH, SUBSCRIBE</tspan></text>
+<rect x="1090" y="100" width="470" height="46" rx="9" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="1100" y="119" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">Service </tspan><tspan fill="#f3ebdd" font-size="13" font-weight="700">redis</tspan></text>
+<text x="1100" y="136" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">10.43.62.101  :6379</tspan></text>
+<path d="M1000,150 L1040,150 L1040,123 L1090,123" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<path d="M1000,302 L1040,302 L1040,123 L1090,123" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<path d="M1000,454 L1040,454 L1040,123 L1090,123" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<path d="M1325,146 L1325,200" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<rect x="1090" y="200" width="470" height="480" rx="10" fill="#16140f" stroke="#8a8377" stroke-width="1.5"/>
+<text x="1106" y="224" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Pod redis</tspan><tspan fill="#d9b886" font-size="12" font-weight="400">   10.42.2.9 :6379</tspan></text>
+<rect x="1106" y="244" width="438" height="102" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="1116" y="262" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">1. Verrous de sièges</tspan></text>
+<text x="1116" y="280" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">clé verrou:{séance}:{siège}</tspan></text>
+<text x="1116" y="297" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">SET NX avec expiration de 10 min</tspan></text>
+<text x="1116" y="314" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">libération par script Lua atomique</tspan></text>
+<rect x="1106" y="356" width="438" height="102" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="1116" y="374" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">2. Compteurs de remplissage</tspan></text>
+<text x="1116" y="392" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">clé remplissage:&lt;séance&gt;</tspan></text>
+<text x="1116" y="409" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">INCR et DECR à chaque réservation</tspan></text>
+<text x="1116" y="426" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">lus pour afficher le taux de remplissage</tspan></text>
+<rect x="1106" y="468" width="438" height="102" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="1116" y="486" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">3. Pub/sub</tspan></text>
+<text x="1116" y="504" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">canaux seance:&lt;id&gt; et remplissage</tspan></text>
+<text x="1116" y="521" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">PUBLISH à chaque changement</tspan></text>
+<text x="1116" y="538" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">chaque back reçoit via sa connexion SUBSCRIBE</tspan></text>
+<text x="1106" y="598" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">--save &quot;&quot; --appendonly no : aucune persistance</tspan></text>
+<text x="1106" y="616" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">maxmemory 100mb, noeviction : refuse plutôt qu'évincer</tspan></text>
+<text x="1106" y="634" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">requests 100m / 100Mi, limits 200m / 200Mi</tspan></text>
+<path d="M1090,530 L1022,530 L1022,500 L1000,500" fill="none" stroke="#8a8377" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-gris)"/>
+<path d="M1022,530 L1022,348 L1000,348" fill="none" stroke="#8a8377" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-gris)"/>
+<path d="M1022,348 L1022,196 L1000,196" fill="none" stroke="#8a8377" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-gris)"/>
+<rect x="600" y="590" width="400" height="120" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="614" y="614" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">PostgreSQL : l'arbitre</tspan></text>
+<path d="M600,624 L1000,624" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="614" y="645" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">index unique partiel (séance, siège)</tspan></text>
+<text x="614" y="664" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">refuse la double réservation, même</tspan></text>
+<text x="614" y="683" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">si Redis perd ou se trompe de verrou</tspan></text>
+<path d="M800,540 L800,590" fill="none" stroke="#8a8377" stroke-width="2" marker-end="url(#m-gris)"/>
+<rect x="765.86" y="555" width="68.28" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="800" y="569.2" text-anchor="middle"><tspan fill="#d8d0c2" font-size="12" font-weight="400">SQL final</tspan></text>
+<rect x="40" y="480" width="520" height="230" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="54" y="504" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Qui fait quoi</tspan></text>
+<path d="M40,514 L560,514" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="54" y="535" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Redis : rapide, éphémère, partagé entre les 3 pods back</tspan></text>
+<text x="54" y="554" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">verrou : bloque un siège pendant le paiement (10 min)</tspan></text>
+<text x="54" y="573" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">compteur : taux de remplissage sans compter en base</tspan></text>
+<text x="54" y="592" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">pub/sub : prévient tous les back, qui relaient en SSE</tspan></text>
+<text x="54" y="611" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">PostgreSQL : décide en dernier, la réservation y est durable</tspan></text>
+<text x="1090" y="872" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">NetworkPolicy redis : seul component=back peut entrer</tspan></text>
+<rect x="1090" y="790" width="140" height="50" rx="8" fill="#16140f" stroke="#c4584c" stroke-width="2"/>
+<text x="1160" y="820" text-anchor="middle"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front</tspan></text>
+<path d="M1160,790 L1160,684" fill="none" stroke="#c4584c" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-rouge)"/>
+<circle cx="1160" cy="737" r="9" fill="#0c0b09" stroke="#c4584c" stroke-width="2"/>
+<path d="M1158,735 L1162,739 M1158,739 L1162,735" stroke="#c4584c" stroke-width="3" fill="none"/>
+<rect x="1245" y="790" width="150" height="50" rx="8" fill="#16140f" stroke="#c4584c" stroke-width="2"/>
+<text x="1320" y="820" text-anchor="middle"><tspan fill="#f3ebdd" font-size="12" font-weight="700">qr-generator</tspan></text>
+<path d="M1320,790 L1320,684" fill="none" stroke="#c4584c" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-rouge)"/>
+<circle cx="1320" cy="737" r="9" fill="#0c0b09" stroke="#c4584c" stroke-width="2"/>
+<path d="M1318,735 L1322,739 M1318,739 L1322,735" stroke="#c4584c" stroke-width="3" fill="none"/>
+<rect x="1410" y="790" width="150" height="50" rx="8" fill="#16140f" stroke="#c4584c" stroke-width="2"/>
+<text x="1485" y="820" text-anchor="middle"><tspan fill="#f3ebdd" font-size="12" font-weight="700">qr-verifier</tspan></text>
+<path d="M1485,790 L1485,684" fill="none" stroke="#c4584c" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-rouge)"/>
+<circle cx="1485" cy="737" r="9" fill="#0c0b09" stroke="#c4584c" stroke-width="2"/>
+<path d="M1483,735 L1487,739 M1483,739 L1487,735" stroke="#c4584c" stroke-width="3" fill="none"/>
+<text x="1090" y="892" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">le back (pods ci-contre) est le seul client autorisé</tspan></text>
+<path d="M40,940 L74,940" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<text x="84" y="944" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">requête ou flux SSE</tspan></text>
+<path d="M240.88,940 L274.88,940" fill="none" stroke="#8a8377" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-gris)"/>
+<text x="284.88" y="944" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">message publié, reçu par chaque back</tspan></text>
+<path d="M552.04,940 L586.04,940" fill="none" stroke="#c4584c" stroke-width="2" marker-end="url(#m-rouge)"/>
+<text x="596.04" y="944" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">refusé par la NetworkPolicy</tspan></text>
+<path d="M796.84,940 L830.84,940" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<text x="840.84" y="944" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">Service -&gt; pod</tspan></text>
+</svg>

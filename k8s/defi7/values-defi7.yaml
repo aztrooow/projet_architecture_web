@@ -1,0 +1,51 @@
+# Défi 7 : PostgreSQL passe en StatefulSet, 1 réplique, volume persistant de 100Mi, service headless.
+# Valeurs cumulatives : ce fichier contient l'état complet voulu à la fin du défi.
+# Utilisation : helm upgrade --install cinetint ../helm/cinetint -n u-XXX -f ../helm/cinetint/values-cours.yaml -f values-defi7.yaml
+
+global:
+  securite: false
+
+postgres:
+  mode: statefulset
+  persistance:
+    enabled: true
+
+postgres-replication:
+  enabled: false
+
+images:
+  tags:
+    front: v1
+    back: v1
+    qrGenerator: v1
+    qrVerifier: v1
+
+sondes:
+  startup: {enabled: false}
+  readiness: {enabled: false}
+  liveness: {enabled: false}
+
+hpa:
+  enabled: false
+
+networkPolicies:
+  postgres:
+    enabled: false
+  applicatives:
+    enabled: false
+
+ingress:
+  limites:
+    enabled: false
+
+hooks:
+  configMap:
+    enabled: false
+  sauvegarde:
+    enabled: false
+  testFumee:
+    enabled: false
+
+sauvegardes:
+  enabled: false
+  planifiee: false

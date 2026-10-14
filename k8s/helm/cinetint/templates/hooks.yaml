@@ -1,0 +1,239 @@
+{{- /*
+Défi 15 : hooks Helm. Un hook est une ressource ordinaire (ici des Jobs) dotée de l'annotation
+helm.sh/hook : Helm la crée à un moment précis du cycle de vie du release, attend sa fin, et
+n'avance que si elle réussit.
+
+  pre-install / pre-upgrade    config-avant        écrit le "carnet de déploiement" (ConfigMap) : état "en cours"
+  pre-upgrade                  sauvegarde-avant    pg_dump de la base AVANT la mise à jour
+  post-install / post-upgrade  config-apres        test de fumée, puis ConfigMap : état "terminé"
+  post-upgrade                 sauvegarde-apres    pg_dump de la base APRÈS la mise à jour
+  post-delete                  nettoyage           supprime le carnet de déploiement
+
+Les ressources RBAC sont elles-mêmes des hooks de poids plus faible : elles existent avant les Jobs
+qui s'en servent (au premier "helm install", rien d'autre n'existe encore).
+*/ -}}
+{{- $cm := .Values.hooks.configMap }}
+{{- $sa := $cm.serviceAccount }}
+{{- $carnet := include "cinetint.nomApp" (dict "ctx" . "n" "deploiement") }}
+{{- if $cm.enabled }}
+{{- if $cm.rbac }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $sa }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "hooks") | nindent 4 }}
+    cinetint.io/hook: "true"
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-20"
+    "helm.sh/hook-delete-policy": before-hook-creation
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $sa }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "hooks") | nindent 4 }}
+    cinetint.io/hook: "true"
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-20"
+    "helm.sh/hook-delete-policy": before-hook-creation
+rules:
+  # seulement des ConfigMaps du namespace : le carnet de déploiement
+  - apiGroups: [""]
+    resources: [configmaps]
+    verbs: [get, list, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $sa }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "hooks") | nindent 4 }}
+    cinetint.io/hook: "true"
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-20"
+    "helm.sh/hook-delete-policy": before-hook-creation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $sa }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $sa }}
+    namespace: {{ .Release.Namespace }}
+---
+{{- end }}
+# Avant le déploiement : le carnet est créé (ou remis à zéro) avec l'état "en-cours".
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "config-avant") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "hooks") | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 180
+  template:
+    metadata:
+      labels:
+        {{- include "cinetint.labels" (dict "ctx" . "c" "hooks") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ $sa }}
+      containers:
+        - name: config-avant
+          image: {{ .Values.images.kubectl }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              kubectl create configmap {{ $carnet }} \
+                --from-literal=etat=en-cours \
+                --from-literal=release={{ .Release.Name }} \
+                --from-literal=revision={{ .Release.Revision }} \
+                --from-literal=action={{ ternary "mise-a-jour" "installation" .Release.IsUpgrade }} \
+                --from-literal=versions="front={{ .Values.images.tags.front }} back={{ .Values.images.tags.back }} qr-generator={{ .Values.images.tags.qrGenerator }} qr-verifier={{ .Values.images.tags.qrVerifier }}" \
+                --from-literal=base="{{ ternary "replication" .Values.postgres.mode (index .Values "postgres-replication" "enabled") }}" \
+                --from-literal=debut="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                --dry-run=client -o yaml | kubectl label --local -f - cinetint.io/hook=true app.kubernetes.io/part-of=cinetint -o yaml | kubectl apply -f -
+              echo "carnet de déploiement écrit (état en-cours)"
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {cpu: 100m, memory: 100Mi}
+---
+# Après le déploiement : test de fumée des quatre services, puis le carnet passe à "termine".
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "config-apres") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "hooks") | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 420
+  template:
+    metadata:
+      labels:
+        # component=test : la NetworkPolicy laisse ce pod joindre les services
+        {{- include "cinetint.labels" (dict "ctx" . "c" "test") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ $sa }}
+      containers:
+        - name: config-apres
+          image: {{ .Values.images.kubectl }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              set -u
+              {{- if .Values.hooks.testFumee.enabled }}
+              {{- include "cinetint.scriptFumee" . | nindent 14 }}
+              {{- else }}
+              sante=non-teste
+              {{- end }}
+              etat=termine
+              [ "$sante" = echec ] && etat=echec
+              kubectl patch configmap {{ $carnet }} --type merge \
+                -p "{\"data\":{\"etat\":\"$etat\",\"sante\":\"$sante\",\"fin\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}"
+              echo "carnet de déploiement mis à jour (état $etat, santé $sante)"
+              [ "$etat" = termine ]
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {cpu: 100m, memory: 100Mi}
+---
+# À la désinstallation : le carnet (créé par un Job, donc inconnu de Helm) est supprimé.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "nettoyage") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "hooks") | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-delete
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 120
+  template:
+    metadata:
+      labels:
+        {{- include "cinetint.labels" (dict "ctx" . "c" "hooks") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ $sa }}
+      containers:
+        - name: nettoyage
+          image: {{ .Values.images.kubectl }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command: ["kubectl", "delete", "configmap", "{{ $carnet }}", "--ignore-not-found"]
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {cpu: 100m, memory: 100Mi}
+{{- end }}
+{{- if and .Values.hooks.sauvegarde.enabled .Values.sauvegardes.enabled (include "cinetint.baseInterne" .) }}
+{{- $pvc := lookup "v1" "PersistentVolumeClaim" .Release.Namespace (include "cinetint.nomApp" (dict "ctx" . "n" "sauvegardes")) }}
+{{- if or $pvc .Release.IsUpgrade }}
+---
+# Avant la mise à jour : sauvegarde de la base, pour pouvoir revenir en arrière si la migration se passe mal.
+# Rendue seulement si le volume de sauvegarde existe déjà (sinon le Job attendrait un volume qui n'est pas encore créé).
+{{- if $pvc }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "sauvegarde-avant") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "sauvegarde") | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        {{- include "cinetint.labels" (dict "ctx" . "c" "sauvegarde") | nindent 8 }}
+    spec:
+      {{- include "cinetint.podSauvegarde" (dict "ctx" . "etiquette" (printf "avant-rev%d" (.Release.Revision | int))) | nindent 6 }}
+---
+{{- end }}
+# Après la mise à jour : seconde sauvegarde, état de la base une fois les nouvelles versions en place.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "sauvegarde-apres") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "sauvegarde") | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        {{- include "cinetint.labels" (dict "ctx" . "c" "sauvegarde") | nindent 8 }}
+    spec:
+      {{- include "cinetint.podSauvegarde" (dict "ctx" . "etiquette" (printf "apres-rev%d" (.Release.Revision | int))) | nindent 6 }}
+{{- end }}
+{{- end }}

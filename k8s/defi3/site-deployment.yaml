@@ -1,0 +1,63 @@
+# Défi 3 : le site (équivalent de « une image Docker avec les apps public et api »).
+# CinetINT a deux processus applicatifs séparés (front = « public », back = « api »). Équivalent de
+# l'image unique du sujet : un Pod à DEUX conteneurs, front et back. Les conteneurs d'un même Pod
+# partagent la même interface réseau (même IP, même localhost) : le front appelle l'API sur
+# http://localhost:8000 sans passer par le réseau du cluster.
+# Image des conteneurs : REGISTRE_IMAGES est remplacé par appliquer.sh (ex. ghcr.io/eldertek).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: site
+  labels:
+    app: site
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: site
+  template:
+    metadata:
+      labels:
+        app: site
+    spec:
+      containers:
+        - name: front
+          image: REGISTRE_IMAGES/cinetint-front:v1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: API_INTERNE
+              value: http://localhost:8000      # le back est dans le même Pod
+          resources:
+            requests: {cpu: 100m, memory: 100Mi}
+            limits: {cpu: 200m, memory: 200Mi}
+        - name: back
+          image: REGISTRE_IMAGES/cinetint-back:v1
+          ports:
+            - containerPort: 8000
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: POSTGRES_PASSWORD}
+            # $(POSTGRES_PASSWORD) est remplacé par Kubernetes (variable déclarée juste au-dessus)
+            - name: DATABASE_URL
+              value: postgresql+asyncpg://cinetint:$(POSTGRES_PASSWORD)@postgres:5432/cinetint
+            - name: REDIS_URL
+              value: redis://redis:6379/0
+            - name: QR_GENERATOR_URL
+              value: http://qr-generator:8001   # déployé au Défi 5
+            - name: SERVICE_TOKEN
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: SERVICE_TOKEN}
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: JWT_SECRET}
+            - name: GERANT_MOT_DE_PASSE
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: GERANT_MOT_DE_PASSE}
+            - name: CONTROLEUR_MOT_DE_PASSE
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: CONTROLEUR_MOT_DE_PASSE}
+          resources:
+            requests: {cpu: 100m, memory: 100Mi}
+            limits: {cpu: 200m, memory: 200Mi}

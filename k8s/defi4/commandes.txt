@@ -1,0 +1,21 @@
+# Défi 4 : Ingress. Les fichiers sont ceux du défi 3 plus ingress.yaml. Remplacer u-XXX et le nom de groupe.
+
+# 1. on applique le site, la base, Redis (déjà en place depuis le défi 3) puis l'Ingress
+NAMESPACE=u-XXX REGISTRE=ghcr.io/eldertek HOTE=django.MONGROUPE.csc8567.luxbulb.org ./k8s/appliquer.sh defi4
+# ou à la main :
+sed 's#HOTE_SITE#django.MONGROUPE.csc8567.luxbulb.org#g' ingress.yaml | kubectl apply -n u-XXX -f -
+
+# 2. vérification
+kubectl get ingress -n u-XXX
+kubectl describe ingress site -n u-XXX
+kubectl get ingressclass
+
+# 3. une fois l'Ingress appliqué, demander aux enseignants de créer l'entrée DNS
+#    django.MONGROUPE.csc8567.luxbulb.org -> 157.159.11.201 (IP MetalLB du contrôleur)
+
+# 4. test sans attendre le DNS : on force l'en-tête Host vers l'IP du LoadBalancer
+curl -s -o /dev/null -w '%{http_code}\n' -H 'Host: django.MONGROUPE.csc8567.luxbulb.org' http://157.159.11.201/
+curl -s -H 'Host: django.MONGROUPE.csc8567.luxbulb.org' http://157.159.11.201/api/sante
+
+# 5. test une fois le DNS créé
+curl -I https://django.MONGROUPE.csc8567.luxbulb.org/

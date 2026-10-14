@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1180" width="1600" height="1180" font-family="Verdana, 'DejaVu Sans', 'Segoe UI', Arial, sans-serif">
+<title>Défi 2 : Deployment à trois répliques, Service ClusterIP et kubectl proxy</title>
+<defs>
+<marker id="m-or" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0965e"/></marker>
+</defs>
+<rect width="1600" height="1180" rx="16" fill="#0c0b09"/>
+<text x="50" y="46"><tspan fill="#c0965e" font-size="24" font-weight="600" letter-spacing="3">CINETINT</tspan><tspan dx="16" fill="#a39c90" font-size="15">défi 2 : trois pods, un Service ClusterIP, un nom DNS, accès par kubectl proxy</tspan></text>
+<rect x="60" y="64" width="480" height="66" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="74" y="88" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Poste du développeur</tspan></text>
+<path d="M60,98 L540,98" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="74" y="119" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">kubectl proxy : écoute 127.0.0.1:8001</tspan></text>
+<rect x="580" y="64" width="980" height="66" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="594" y="88" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">curl ou navigateur</tspan></text>
+<path d="M580,98 L1560,98" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="594" y="119" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">http://127.0.0.1:8001/api/v1/namespaces/u-XXX/services/csc8567/proxy/</tspan></text>
+<path d="M580,97 L540,97" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<circle cx="560" cy="78" r="11" fill="#c0965e"/>
+<text x="560" y="82.2" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">1</text>
+<rect x="20" y="148" width="1560" height="1000" rx="14" fill="none" stroke="#8a8377" stroke-width="1.2" stroke-dasharray="6 5"/>
+<text x="1564" y="168" text-anchor="end"><tspan fill="#8a8377" font-size="12" font-weight="400">Cluster Kubernetes RKE2, espace de noms u-XXX</tspan></text>
+<rect x="60" y="182" width="1500" height="150" rx="12" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="76" y="206" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Node 1 (master, control plane)</tspan><tspan fill="#a39c90" font-size="12" font-weight="400">   aucun pod applicatif ici</tspan></text>
+<rect x="76" y="222" width="330" height="98" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+<text x="90" y="246" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">API server :6443</tspan></text>
+<path d="M76,256 L406,256" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="90" y="277" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">reçoit l'URL de kubectl proxy</tspan></text>
+<text x="90" y="296" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">lit le Service et ses endpoints</tspan></text>
+<text x="90" y="315" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">relaie vers un des pods</tspan></text>
+<rect x="420" y="222" width="190" height="98" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="430" y="240" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">etcd</tspan></text>
+<text x="430" y="258" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Deployment,</tspan></text>
+<text x="430" y="275" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Service, endpoints</tspan></text>
+<rect x="624" y="222" width="190" height="98" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="634" y="240" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">scheduler</tspan></text>
+<text x="634" y="258" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">répartit les 3 pods</tspan></text>
+<text x="634" y="275" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">sur Node 2 et Node 3</tspan></text>
+<rect x="828" y="222" width="230" height="98" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="838" y="240" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">controller-manager</tspan></text>
+<text x="838" y="258" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Deployment -&gt; ReplicaSet</tspan></text>
+<text x="838" y="275" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">ReplicaSet -&gt; pods</tspan></text>
+<rect x="1072" y="222" width="474" height="98" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="1086" y="246" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Deployment csc8567</tspan></text>
+<path d="M1072,256 L1546,256" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="1086" y="277" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">replicas 3, image xhelozs/csc8567:v1</tspan></text>
+<text x="1086" y="296" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">requests 100m / 100Mi, limits 200m / 200Mi</tspan></text>
+<text x="1086" y="315" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">ReplicaSet csc8567-6c9d5 : garde 3 pods</tspan></text>
+<rect x="1462" y="211" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="1503.19" y="225.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<path d="M60,97 L34,97 L34,270 L76,270" fill="none" stroke="#c0965e" stroke-width="3" marker-end="url(#m-or)"/>
+<circle cx="34" cy="190" r="11" fill="#c0965e"/>
+<text x="34" y="194.2" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">2</text>
+<rect x="640" y="372" width="600" height="124" rx="10" fill="#12161a" stroke="#c0965e" stroke-width="3"/>
+<text x="654" y="396" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Service csc8567 (ClusterIP)</tspan></text>
+<path d="M640,406 L1240,406" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="654" y="427" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">10.43.171.20 :80  -&gt;  pods :5000</tspan></text>
+<text x="654" y="446" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">DNS : csc8567.u-XXX.svc.cluster.local (CoreDNS)</tspan></text>
+<text x="654" y="465" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">sélecteur app=csc8567 : trois endpoints</tspan></text>
+<rect x="1156" y="361" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="1197.19" y="375.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<text x="76" y="400" text-anchor="start"><tspan fill="#9db6cf" font-size="13" font-weight="700">Réseau des Services</tspan></text>
+<text x="76" y="418" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">10.43.0.0/16</tspan></text>
+<path d="M240,320 L240,434 L640,434" fill="none" stroke="#c0965e" stroke-width="3" marker-end="url(#m-or)"/>
+<rect x="382.76" y="424" width="114.48" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="440" y="438.2" text-anchor="middle"><tspan fill="#d9b886" font-size="12" font-weight="400">proxy du Service</tspan></text>
+<circle cx="240" cy="380" r="11" fill="#c0965e"/>
+<text x="240" y="384.2" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">3</text>
+<rect x="60" y="540" width="740" height="340" rx="12" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<rect x="840" y="540" width="720" height="340" rx="12" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="76" y="564" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Node 2 (worker)</tspan><tspan fill="#a39c90" font-size="12" font-weight="400">   pods 10.42.1.0/24   kubelet, cni0</tspan></text>
+<text x="856" y="564" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Node 3 (worker)</tspan><tspan fill="#a39c90" font-size="12" font-weight="400">   pods 10.42.2.0/24   kubelet, cni0</tspan></text>
+<rect x="76" y="580" width="708" height="82" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="90" y="604" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">kube-proxy (règles iptables)</tspan></text>
+<path d="M76,614 L784,614" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="90" y="635" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">10.43.171.20:80 : DNAT vers l'un des 3 pods, au hasard (clients du cluster)</tspan></text>
+<rect x="856" y="580" width="688" height="82" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="870" y="604" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">kube-proxy (règles iptables)</tspan></text>
+<path d="M856,614 L1544,614" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="870" y="635" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">même règle sur chaque nœud : le pod appelant n'a rien à choisir</tspan></text>
+<rect x="76" y="730" width="344" height="96" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="86" y="748" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">csc8567-6c9d5-x2k4p</tspan></text>
+<text x="86" y="765" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.14  :5000</tspan></text>
+<text x="86" y="799" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">requests 100m / 100Mi</tspan></text>
+<text x="86" y="816" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">limits 200m / 200Mi</tspan></text>
+<rect x="440" y="730" width="344" height="96" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="450" y="748" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">csc8567-6c9d5-m9q2z</tspan></text>
+<text x="450" y="765" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.15  :5000</tspan></text>
+<text x="450" y="799" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">requests 100m / 100Mi</tspan></text>
+<text x="450" y="816" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">limits 200m / 200Mi</tspan></text>
+<rect x="856" y="730" width="344" height="96" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="866" y="748" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">csc8567-6c9d5-t5w8c</tspan></text>
+<text x="866" y="765" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.12  :5000</tspan></text>
+<text x="866" y="799" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">requests 100m / 100Mi</tspan></text>
+<text x="866" y="816" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">limits 200m / 200Mi</tspan></text>
+<rect x="76" y="856" width="708" height="10" rx="4" fill="#d9b886" opacity="0.45"/>
+<rect x="856" y="856" width="688" height="10" rx="4" fill="#d9b886" opacity="0.45"/>
+<path d="M820,496 L820,696 L248,696 L248,730" fill="none" stroke="#c0965e" stroke-width="3" marker-end="url(#m-or)"/>
+<path d="M820,696 L612,696 L612,730" fill="none" stroke="#c0965e" stroke-width="3" marker-end="url(#m-or)"/>
+<path d="M820,696 L1028,696 L1028,730" fill="none" stroke="#c0965e" stroke-width="3" marker-end="url(#m-or)"/>
+<circle cx="820" cy="596" r="11" fill="#c0965e"/>
+<text x="820" y="600.2" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">4</text>
+<rect x="60" y="900" width="740" height="170" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="74" y="924" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Accès par kubectl proxy</tspan></text>
+<path d="M60,934 L800,934" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="74" y="955" text-anchor="start"><tspan fill="#c0965e" font-size="12" font-weight="700">1  </tspan><tspan fill="#d8d0c2" font-size="12" font-weight="400">curl parle HTTP à kubectl proxy (127.0.0.1:8001)</tspan></text>
+<text x="74" y="974" text-anchor="start"><tspan fill="#c0965e" font-size="12" font-weight="700">2  </tspan><tspan fill="#d8d0c2" font-size="12" font-weight="400">kubectl proxy transmet à l'API server (:6443, Node 1)</tspan></text>
+<text x="74" y="993" text-anchor="start"><tspan fill="#c0965e" font-size="12" font-weight="700">3  </tspan><tspan fill="#d8d0c2" font-size="12" font-weight="400">l'API server lit le Service csc8567 : nom DNS, port 80, sélecteur</tspan></text>
+<text x="74" y="1012" text-anchor="start"><tspan fill="#c0965e" font-size="12" font-weight="700">4  </tspan><tspan fill="#d8d0c2" font-size="12" font-weight="400">il choisit l'un des trois endpoints et appelle le pod (port 5000)</tspan></text>
+<rect x="830" y="900" width="730" height="170" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="844" y="924" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Ce que ce défi ajoute au défi 1</tspan></text>
+<path d="M830,934 L1560,934" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="844" y="955" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">trois pods au lieu d'un, répartis sur les deux workers</tspan></text>
+<text x="844" y="974" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">chaque pod borné : requests 100m / 100Mi, limits 200m / 200Mi</tspan></text>
+<text x="844" y="993" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">un Service ClusterIP : une IP virtuelle stable et un nom DNS</tspan></text>
+<text x="844" y="1012" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">le Deployment recrée un pod supprimé (autoguérison)</tspan></text>
+<rect x="1476" y="889" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="1517.19" y="903.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<path d="M60,1100 L94,1100" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<text x="104" y="1104" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">chemin de la requête</tspan></text>
+<rect x="265.8" y="1092" width="34" height="16" rx="4" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="309.8" y="1104" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">Service ClusterIP</tspan></text>
+<rect x="453.72" y="1092" width="34" height="16" rx="4" fill="#16140f" stroke="#8a8377" stroke-width="1.5"/>
+<text x="497.72" y="1104" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">pod (IP d'exemple)</tspan></text>
+<rect x="652.68" y="1092" width="34" height="16" rx="4" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="696.68" y="1104" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">NOUVEAU dans ce défi</tspan></text>
+</svg>

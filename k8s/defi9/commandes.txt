@@ -1,0 +1,24 @@
+# Défi 9 : HorizontalPodAutoscaler sur le front et sur le back (60 % de CPU, 3 à 10 pods).
+# Nécessite metrics-server dans le cluster (présent par défaut sur RKE2 : "kubectl top pods" doit répondre).
+
+helm upgrade --install cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi9.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --timeout 10m
+
+# vérification
+kubectl get hpa -n u-XXX
+kubectl describe hpa back -n u-XXX
+kubectl top pods -n u-XXX
+
+# générateur de charge dans le cluster (outil fortio) : 16 connexions pendant 4 minutes
+kubectl run charge-front -n u-XXX --image=fortio/fortio --restart=Never -- load -qps 0 -c 16 -t 240s -timeout 30s -allow-initial-errors -quiet http://front:8080/accueil
+kubectl run charge-back  -n u-XXX --image=fortio/fortio --restart=Never -- load -qps 0 -c 16 -t 240s -timeout 30s -allow-initial-errors -quiet http://back:8000/api/programme
+
+# observer la montée puis, après la charge, la descente (stabilisation de 60 s avant de réduire)
+kubectl get hpa -n u-XXX -w
+kubectl get pods -n u-XXX -l 'app.kubernetes.io/component in (front,back)' -w
+
+# nettoyage de la charge
+kubectl delete pod charge-front charge-back -n u-XXX

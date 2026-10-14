@@ -1,0 +1,306 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1250" width="1600" height="1250" font-family="Verdana, 'DejaVu Sans', 'Segoe UI', Arial, sans-serif">
+<title>Défi 6 : déploiement par Helm (charte, release, ConfigMap, Secret)</title>
+<defs>
+<marker id="m-bleu" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6f8fb0"/></marker>
+<marker id="m-gris" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8a8377"/></marker>
+<marker id="m-or" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0965e"/></marker>
+</defs>
+<rect width="1600" height="1250" rx="16" fill="#0c0b09"/>
+<text x="50" y="46"><tspan fill="#c0965e" font-size="24" font-weight="600" letter-spacing="3">CINETINT</tspan><tspan dx="16" fill="#a39c90" font-size="15">défi 6 : Helm, une charte, une release, ConfigMap et Secret injectés dans les pods</tspan></text>
+<rect x="20" y="148" width="1560" height="800" rx="14" fill="none" stroke="#8a8377" stroke-width="1.2" stroke-dasharray="6 5"/>
+<text x="1440" y="160" text-anchor="end"><tspan fill="#8a8377" font-size="12" font-weight="400">Cluster Kubernetes RKE2 : pods 10.42.0.0/16, Services 10.43.0.0/16</tspan></text>
+<rect x="372" y="64" width="250" height="66" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="386" y="88" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Navigateur</tspan></text>
+<path d="M372,98 L622,98" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="386" y="119" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">HTTPS vers le nom public</tspan></text>
+<rect x="660" y="64" width="520" height="66" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="674" y="88" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">DNS public (créé par les enseignants)</tspan></text>
+<path d="M660,98 L1180,98" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="674" y="119" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">django.&lt;groupe&gt;.csc8567.luxbulb.org -&gt; 157.159.11.201</tspan></text>
+<rect x="372" y="174" width="224" height="124" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="386" y="198" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">MetalLB (speaker)</tspan></text>
+<path d="M372,208 L596,208" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="386" y="229" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">annonce l'IP externe</tspan></text>
+<text x="386" y="248" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="700">157.159.11.201</tspan></text>
+<text x="386" y="267" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">attribuée au Service LB</tspan></text>
+<text x="386" y="286" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">(adresse du pool du cluster)</tspan></text>
+<rect x="636" y="174" width="306" height="124" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="650" y="198" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Service LoadBalancer</tspan></text>
+<path d="M636,208 L942,208" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="650" y="229" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">rke2-ingress-nginx-controller</tspan></text>
+<text x="650" y="248" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">ClusterIP 10.43.144.159</tspan></text>
+<text x="650" y="267" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">80:31324/TCP  443:30747/TCP</tspan></text>
+<text x="650" y="286" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">(namespace kube-system)</tspan></text>
+<rect x="978" y="174" width="250" height="124" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="992" y="198" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Pod ingress-nginx</tspan></text>
+<path d="M978,208 L1228,208" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="992" y="229" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">namespace kube-system</tspan></text>
+<text x="992" y="248" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">nginx lit les Ingress</tspan></text>
+<text x="992" y="267" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">écoute 80 et 443</tspan></text>
+<text x="992" y="286" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">choisit selon le chemin</tspan></text>
+<rect x="1256" y="174" width="304" height="124" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="1270" y="198" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Ingress api + site</tspan></text>
+<text x="1546" y="198" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">u-XXX</tspan></text>
+<path d="M1256,208 L1560,208" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="1270" y="229" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">/api -&gt; back:8000</tspan></text>
+<text x="1270" y="248" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">/qr -&gt; qr-generator:8001</tspan></text>
+<text x="1270" y="267" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">/verification -&gt; qr-verifier:8002</tspan></text>
+<text x="1270" y="286" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">/ -&gt; front:8080</tspan></text>
+<path d="M622,97 L660,97" fill="none" stroke="#8a8377" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-gris)"/>
+<path d="M480,130 L480,174" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<path d="M596,237 L636,237" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<path d="M942,237 L978,237" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<path d="M1256,237 L1228,237" fill="none" stroke="#8a8377" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-gris)"/>
+<rect x="60" y="174" width="290" height="124" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="74" y="198" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">CoreDNS</tspan></text>
+<text x="336" y="198" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">kube-system</tspan></text>
+<path d="M60,208 L350,208" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="74" y="229" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Service kube-dns 10.43.0.10</tspan></text>
+<text x="74" y="248" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">résout les noms des Services</tspan></text>
+<text x="74" y="267" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">ex. back.u-XXX.svc.cluster.local</tspan></text>
+<text x="74" y="286" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">(les pods appellent « back »)</tspan></text>
+<text x="74" y="444" text-anchor="start"><tspan fill="#9db6cf" font-size="13" font-weight="700">Réseau des Services</tspan></text>
+<text x="74" y="461" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">10.43.0.0/16 (IP virtuelles)</tspan></text>
+<circle cx="69" cy="316" r="9" fill="#0c0b09" stroke="#8a8377" stroke-width="1.5"/>
+<text x="69" y="320.2" text-anchor="middle" fill="#f3ebdd" font-size="12" font-weight="700">A</text>
+<text x="86" y="320" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">front -&gt; back</tspan></text>
+<circle cx="69" cy="333" r="9" fill="#0c0b09" stroke="#8a8377" stroke-width="1.5"/>
+<text x="69" y="337.2" text-anchor="middle" fill="#f3ebdd" font-size="12" font-weight="700">B</text>
+<text x="86" y="337" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">back -&gt; qr-generator</tspan></text>
+<circle cx="69" cy="350" r="9" fill="#0c0b09" stroke="#8a8377" stroke-width="1.5"/>
+<text x="69" y="354.2" text-anchor="middle" fill="#f3ebdd" font-size="12" font-weight="700">C</text>
+<text x="86" y="354" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">qr-verifier -&gt; back</tspan></text>
+<circle cx="69" cy="367" r="9" fill="#0c0b09" stroke="#8a8377" stroke-width="1.5"/>
+<text x="69" y="371.2" text-anchor="middle" fill="#f3ebdd" font-size="12" font-weight="700">D</text>
+<text x="86" y="371" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">qr-verifier -&gt; qr-generator</tspan></text>
+<circle cx="69" cy="384" r="9" fill="#0c0b09" stroke="#8a8377" stroke-width="1.5"/>
+<text x="69" y="388.2" text-anchor="middle" fill="#f3ebdd" font-size="12" font-weight="700">E</text>
+<text x="86" y="388" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">back -&gt; redis</tspan></text>
+<circle cx="69" cy="401" r="9" fill="#0c0b09" stroke="#8a8377" stroke-width="1.5"/>
+<text x="69" y="405.2" text-anchor="middle" fill="#f3ebdd" font-size="12" font-weight="700">F</text>
+<text x="86" y="405" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">back -&gt; postgres</tspan></text>
+<rect x="60" y="486" width="1500" height="164" rx="12" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="74" y="511" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Node 2 (worker)</tspan></text>
+<text x="74" y="532" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">pods : 10.42.1.0/24</tspan></text>
+<text x="74" y="550" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">kubelet, containerd</tspan></text>
+<text x="74" y="568" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">kube-proxy (iptables)</tspan></text>
+<text x="74" y="586" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">pont cni0, veth par pod</tspan></text>
+<rect x="276" y="634" width="1272" height="8" rx="3" fill="#d9b886" opacity="0.45"/>
+<rect x="60" y="660" width="1500" height="164" rx="12" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="74" y="685" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Node 3 (worker)</tspan></text>
+<text x="74" y="706" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">pods : 10.42.2.0/24</tspan></text>
+<text x="74" y="724" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">kubelet, containerd</tspan></text>
+<text x="74" y="742" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">kube-proxy (iptables)</tspan></text>
+<text x="74" y="760" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">pont cni0, veth par pod</tspan></text>
+<rect x="276" y="808" width="1272" height="8" rx="3" fill="#d9b886" opacity="0.45"/>
+<rect x="60" y="834" width="1500" height="100" rx="12" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="74" y="856" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Node 1 (master, control plane)</tspan><tspan fill="#a39c90" font-size="12" font-weight="400">   pods 10.42.0.0/24 : aucun pod applicatif ici</tspan></text>
+<rect x="74" y="866" width="214" height="58" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="84" y="883" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">API server</tspan></text>
+<text x="84" y="900" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">:6443, entrée de kubectl</tspan></text>
+<text x="84" y="916" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">valide, puis écrit dans etcd</tspan></text>
+<rect x="298" y="866" width="214" height="58" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="308" y="883" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">etcd</tspan></text>
+<text x="308" y="900" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">:2379, base clé-valeur</tspan></text>
+<text x="308" y="916" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">état de tout le cluster</tspan></text>
+<rect x="522" y="866" width="214" height="58" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="532" y="883" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">scheduler</tspan></text>
+<text x="532" y="900" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">choisit le nœud</tspan></text>
+<text x="532" y="916" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">de chaque nouveau pod</tspan></text>
+<rect x="746" y="866" width="214" height="58" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="756" y="883" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">controller-manager</tspan></text>
+<text x="756" y="900" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Deployment, ReplicaSet,</tspan></text>
+<text x="756" y="916" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">boucles de réconciliation</tspan></text>
+<rect x="970" y="866" width="214" height="58" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="980" y="883" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">kubelet, kube-proxy</tspan></text>
+<text x="980" y="900" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">sur chaque nœud : lancent</tspan></text>
+<text x="980" y="916" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">les pods, règles iptables</tspan></text>
+<text x="1200" y="888" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">La release et les manifests</tspan></text>
+<text x="1200" y="906" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">passent par l'API server</tspan></text>
+<rect x="290" y="408" width="197" height="46" rx="9" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="300" y="427" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">Service </tspan><tspan fill="#f3ebdd" font-size="13" font-weight="700">front</tspan></text>
+<text x="300" y="444" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">10.43.88.12  :8080</tspan></text>
+<rect x="316" y="568" width="173" height="60" rx="8" fill="#16140f" stroke="#8a8377" stroke-width="1.2"/>
+<text x="326" y="586" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-x2k4p</tspan></text>
+<text x="326" y="603" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.14  :8080</tspan></text>
+<text x="326" y="620" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">env : ConfigMap</tspan></text>
+<rect x="316" y="502" width="173" height="60" rx="8" fill="#16140f" stroke="#8a8377" stroke-width="1.2"/>
+<text x="326" y="520" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-m9q2z</tspan></text>
+<text x="326" y="537" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.15  :8080</tspan></text>
+<text x="326" y="554" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">env : ConfigMap</tspan></text>
+<rect x="316" y="742" width="173" height="60" rx="8" fill="#16140f" stroke="#8a8377" stroke-width="1.2"/>
+<text x="326" y="760" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-t5w8c</tspan></text>
+<text x="326" y="777" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.12  :8080</tspan></text>
+<text x="326" y="794" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">env : ConfigMap</tspan></text>
+<path d="M296,454 L296,772" fill="none" stroke="#6f8fb0" stroke-width="2"/>
+<path d="M296,532 L316,532" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M296,598 L316,598" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M296,772 L316,772" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<rect x="503" y="408" width="197" height="46" rx="9" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="513" y="427" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">Service </tspan><tspan fill="#f3ebdd" font-size="13" font-weight="700">back</tspan></text>
+<text x="513" y="444" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">10.43.201.5  :8000</tspan></text>
+<rect x="529" y="568" width="173" height="60" rx="8" fill="#16140f" stroke="#8a8377" stroke-width="1.2"/>
+<text x="539" y="586" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">back-7c5b9-h4n6r</tspan></text>
+<text x="539" y="603" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.21  :8000</tspan></text>
+<text x="539" y="620" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">ConfigMap + Secret</tspan></text>
+<rect x="529" y="742" width="173" height="60" rx="8" fill="#16140f" stroke="#8a8377" stroke-width="1.2"/>
+<text x="539" y="760" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">back-7c5b9-j8v3d</tspan></text>
+<text x="539" y="777" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.23  :8000</tspan></text>
+<text x="539" y="794" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">ConfigMap + Secret</tspan></text>
+<rect x="529" y="676" width="173" height="60" rx="8" fill="#16140f" stroke="#8a8377" stroke-width="1.2"/>
+<text x="539" y="694" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">back-7c5b9-q2l7s</tspan></text>
+<text x="539" y="711" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.24  :8000</tspan></text>
+<text x="539" y="728" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">ConfigMap + Secret</tspan></text>
+<path d="M509,454 L509,772" fill="none" stroke="#6f8fb0" stroke-width="2"/>
+<path d="M509,598 L529,598" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M509,706 L529,706" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M509,772 L529,772" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<rect x="716" y="408" width="197" height="46" rx="9" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="726" y="427" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">Service </tspan><tspan fill="#f3ebdd" font-size="13" font-weight="700">qr-generator</tspan></text>
+<text x="726" y="444" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">10.43.17.60  :8001</tspan></text>
+<rect x="742" y="568" width="173" height="60" rx="8" fill="#16140f" stroke="#8a8377" stroke-width="1.2"/>
+<text x="752" y="586" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">qr-generator-d7k2p</tspan></text>
+<text x="752" y="603" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.33  :8001</tspan></text>
+<text x="752" y="620" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Secret cinetint-cle</tspan></text>
+<rect x="742" y="742" width="173" height="60" rx="8" fill="#16140f" stroke="#8a8377" stroke-width="1.2"/>
+<text x="752" y="760" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">qr-generator-w9m4x</tspan></text>
+<text x="752" y="777" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.31  :8001</tspan></text>
+<text x="752" y="794" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Secret cinetint-cle</tspan></text>
+<path d="M722,454 L722,772" fill="none" stroke="#6f8fb0" stroke-width="2"/>
+<path d="M722,598 L742,598" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M722,772 L742,772" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<rect x="929" y="408" width="197" height="46" rx="9" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="939" y="427" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">Service </tspan><tspan fill="#f3ebdd" font-size="13" font-weight="700">qr-verifier</tspan></text>
+<text x="939" y="444" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">10.43.149.23  :8002</tspan></text>
+<rect x="955" y="568" width="173" height="60" rx="8" fill="#16140f" stroke="#8a8377" stroke-width="1.2"/>
+<text x="965" y="586" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">qr-verifier-k4m8n</tspan></text>
+<text x="965" y="603" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.34  :8002</tspan></text>
+<text x="965" y="620" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Secret cinetint-cle</tspan></text>
+<rect x="955" y="742" width="173" height="60" rx="8" fill="#16140f" stroke="#8a8377" stroke-width="1.2"/>
+<text x="965" y="760" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">qr-verifier-p6t2v</tspan></text>
+<text x="965" y="777" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.32  :8002</tspan></text>
+<text x="965" y="794" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Secret cinetint-cle</tspan></text>
+<path d="M935,454 L935,772" fill="none" stroke="#6f8fb0" stroke-width="2"/>
+<path d="M935,598 L955,598" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M935,772 L955,772" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<rect x="1142" y="408" width="197" height="46" rx="9" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="1152" y="427" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">Service </tspan><tspan fill="#f3ebdd" font-size="13" font-weight="700">redis</tspan></text>
+<text x="1152" y="444" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">10.43.62.101  :6379</tspan></text>
+<rect x="1168" y="742" width="173" height="60" rx="8" fill="#16140f" stroke="#8a8377" stroke-width="1.2"/>
+<text x="1178" y="760" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">redis-5b7c-t3w8z</tspan></text>
+<text x="1178" y="777" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.9  :6379</tspan></text>
+<text x="1178" y="794" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">sans persistance</tspan></text>
+<path d="M1148,454 L1148,772" fill="none" stroke="#6f8fb0" stroke-width="2"/>
+<path d="M1148,772 L1168,772" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<rect x="1355" y="408" width="197" height="46" rx="9" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="1365" y="427" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">Service </tspan><tspan fill="#f3ebdd" font-size="13" font-weight="700">postgres</tspan></text>
+<text x="1365" y="444" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">10.43.230.74  :5432</tspan></text>
+<rect x="1381" y="568" width="173" height="60" rx="8" fill="#16140f" stroke="#8a8377" stroke-width="1.2"/>
+<text x="1391" y="586" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">postgres-6f9d-l2k8m</tspan></text>
+<text x="1391" y="603" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.8  :5432</tspan></text>
+<text x="1391" y="620" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">ConfigMap + Secret</tspan></text>
+<path d="M1361,454 L1361,598" fill="none" stroke="#6f8fb0" stroke-width="2"/>
+<path d="M1361,598 L1381,598" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M1103,298 L1103,328 L388.5,328" fill="none" stroke="#c0965e" stroke-width="2"/>
+<path d="M388.5,328 L388.5,408" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<path d="M601.5,328 L601.5,408" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<path d="M814.5,328 L814.5,408" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<path d="M1027.5,328 L1027.5,408" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<path d="M438.5,408 L438.5,388 L551.5,388 L551.5,408" fill="none" stroke="#8a8377" stroke-width="2" marker-end="url(#m-gris)"/>
+<circle cx="495" cy="388" r="11" fill="#0c0b09" stroke="#8a8377" stroke-width="1.5"/>
+<text x="495" y="392.2" text-anchor="middle" fill="#f3ebdd" font-size="12" font-weight="700">A</text>
+<path d="M671.5,408 L671.5,388 L764.5,388 L764.5,408" fill="none" stroke="#8a8377" stroke-width="2" marker-end="url(#m-gris)"/>
+<circle cx="718" cy="388" r="11" fill="#0c0b09" stroke="#8a8377" stroke-width="1.5"/>
+<text x="718" y="392.2" text-anchor="middle" fill="#f3ebdd" font-size="12" font-weight="700">B</text>
+<path d="M977.5,408 L977.5,388 L864.5,388 L864.5,408" fill="none" stroke="#8a8377" stroke-width="2" marker-end="url(#m-gris)"/>
+<circle cx="921" cy="388" r="11" fill="#0c0b09" stroke="#8a8377" stroke-width="1.5"/>
+<text x="921" y="392.2" text-anchor="middle" fill="#f3ebdd" font-size="12" font-weight="700">D</text>
+<path d="M1072.5,408 L1072.5,370 L646.5,370 L646.5,408" fill="none" stroke="#8a8377" stroke-width="2" marker-end="url(#m-gris)"/>
+<circle cx="859.5" cy="370" r="11" fill="#0c0b09" stroke="#8a8377" stroke-width="1.5"/>
+<text x="859.5" y="374.2" text-anchor="middle" fill="#f3ebdd" font-size="12" font-weight="700">C</text>
+<path d="M621.5,408 L621.5,352 L1423.5,352 L1423.5,408" fill="none" stroke="#8a8377" stroke-width="2" marker-end="url(#m-gris)"/>
+<path d="M1210.5,352 L1210.5,408" fill="none" stroke="#8a8377" stroke-width="2" marker-end="url(#m-gris)"/>
+<circle cx="1210.5" cy="380" r="11" fill="#0c0b09" stroke="#8a8377" stroke-width="1.5"/>
+<text x="1210.5" y="384.2" text-anchor="middle" fill="#f3ebdd" font-size="12" font-weight="700">E</text>
+<circle cx="1423.5" cy="380" r="11" fill="#0c0b09" stroke="#8a8377" stroke-width="1.5"/>
+<text x="1423.5" y="384.2" text-anchor="middle" fill="#f3ebdd" font-size="12" font-weight="700">F</text>
+<rect x="396.5" y="318" width="17.676" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="405.338" y="332.2" text-anchor="middle"><tspan fill="#d9b886" font-size="12" font-weight="700">/</tspan></text>
+<rect x="609.5" y="318" width="37.344" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="628.172" y="332.2" text-anchor="middle"><tspan fill="#d9b886" font-size="12" font-weight="700">/api</tspan></text>
+<rect x="822.5" y="318" width="31.536" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="838.268" y="332.2" text-anchor="middle"><tspan fill="#d9b886" font-size="12" font-weight="700">/qr</tspan></text>
+<rect x="928.828" y="318" width="90.672" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="974.164" y="332.2" text-anchor="middle"><tspan fill="#d9b886" font-size="12" font-weight="700">/verification</tspan></text>
+<rect x="60" y="966" width="300" height="86" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="74" y="990" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Poste du développeur</tspan></text>
+<path d="M60,1000 L360,1000" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="74" y="1021" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">helm upgrade --install cinetint</tspan></text>
+<text x="74" y="1040" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">-f values-cours.yaml</tspan></text>
+<rect x="276" y="955" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="317.188" y="969.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<path d="M170,966 L170,924" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<text x="158" y="960" text-anchor="end"><tspan fill="#d8d0c2" font-size="12" font-weight="400">manifests rendus</tspan></text>
+<rect x="60" y="1078" width="300" height="126" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="74" y="1102" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Charte Helm cinetint</tspan></text>
+<path d="M60,1112 L360,1112" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="74" y="1133" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Chart.yaml : version, dépendances</tspan></text>
+<text x="74" y="1152" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">values.yaml : tous les réglages</tspan></text>
+<text x="74" y="1171" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">templates/ : modèles des objets</tspan></text>
+<text x="74" y="1190" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Go templates : boucles, conditions</tspan></text>
+<rect x="276" y="1067" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="317.188" y="1081.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<path d="M210,1078 L210,1052" fill="none" stroke="#8a8377" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-gris)"/>
+<text x="198" y="1070" text-anchor="end"><tspan fill="#d8d0c2" font-size="12" font-weight="400">helm lit la charte</tspan></text>
+<text x="400" y="972" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Objets de l'espace u-XXX (dans etcd)</tspan></text>
+<rect x="400" y="982" width="390" height="107" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="414" y="1006" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ConfigMap cinetint-config</tspan></text>
+<path d="M400,1016 L790,1016" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="414" y="1037" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">POSTGRES_HOST=postgres, POSTGRES_PORT=5432</tspan></text>
+<text x="414" y="1056" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">POSTGRES_DB, POSTGRES_USER</tspan></text>
+<text x="414" y="1075" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">REDIS_URL=redis://redis:6379/0</tspan></text>
+<rect x="706" y="971" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="747.188" y="985.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<rect x="400" y="1101" width="390" height="88" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="414" y="1125" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Secret cinetint-secrets</tspan></text>
+<path d="M400,1135 L790,1135" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="414" y="1156" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">POSTGRES_PASSWORD</tspan></text>
+<text x="414" y="1175" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">générés par la charte, jamais dans le dépôt</tspan></text>
+<rect x="706" y="1090" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="747.188" y="1104.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<rect x="1010" y="966" width="550" height="168" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="1024" y="990" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Pod back (zoom) : variables d'environnement</tspan></text>
+<path d="M1010,1000 L1560,1000" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="1024" y="1021" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="700">POSTGRES_HOST, PORT, DB, USER</tspan><tspan fill="#9db6cf" font-size="12" font-weight="400">  &lt;-  configMapKeyRef</tspan></text>
+<text x="1024" y="1040" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="700">POSTGRES_PASSWORD</tspan><tspan fill="#9db6cf" font-size="12" font-weight="400">  &lt;-  secretKeyRef cinetint-secrets</tspan></text>
+<text x="1024" y="1059" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="700">REDIS_URL</tspan><tspan fill="#9db6cf" font-size="12" font-weight="400">  &lt;-  configMapKeyRef cinetint-config</tspan></text>
+<text x="1024" y="1078" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">DATABASE_URL, assemblée par Kubernetes avec $(VARIABLE) :</tspan></text>
+<text x="1024" y="1097" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">postgresql+asyncpg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)</tspan></text>
+<text x="1024" y="1116" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)</tspan></text>
+<rect x="1476" y="955" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="1517.19" y="969.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<path d="M790,1016 L1010,1016" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<rect x="842.52" y="1006" width="114.96" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="900" y="1020.2" text-anchor="middle"><tspan fill="#9db6cf" font-size="12" font-weight="400">configMapKeyRef</tspan></text>
+<path d="M790,1144 L880,1144 L880,1066 L1010,1066" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<rect x="903.92" y="1056" width="92.16" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="950" y="1070.2" text-anchor="middle"><tspan fill="#9db6cf" font-size="12" font-weight="400">secretKeyRef</tspan></text>
+<rect x="1010" y="1148" width="550" height="66" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="1024" y="1172" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Secret sh.helm.release.v1.cinetint.v1</tspan></text>
+<path d="M1010,1182 L1560,1182" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="1024" y="1203" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">historique des révisions : helm rollback</tspan></text>
+<rect x="1476" y="1137" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="1517.19" y="1151.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<path d="M60,1228 L94,1228" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<text x="104" y="1232" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">flux principal</tspan></text>
+<path d="M215.04,1228 L249.04,1228" fill="none" stroke="#8a8377" stroke-width="2" marker-end="url(#m-gris)"/>
+<text x="259.04" y="1232" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">appel entre Services</tspan></text>
+<path d="M417,1228 L451,1228" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<text x="461" y="1232" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">Service -&gt; pod (DNAT kube-proxy)</tspan></text>
+<rect x="709.56" y="1220" width="34" height="16" rx="4" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="753.56" y="1232" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">Service ClusterIP</tspan></text>
+<rect x="897.48" y="1220" width="34" height="16" rx="4" fill="#16140f" stroke="#8a8377" stroke-width="1.5"/>
+<text x="941.48" y="1232" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">pod (IP d'exemple)</tspan></text>
+<rect x="1096.44" y="1220" width="34" height="16" rx="4" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="1140.44" y="1232" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">NOUVEAU dans ce défi</tspan></text>
+</svg>

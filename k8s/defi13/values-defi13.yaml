@@ -1,0 +1,51 @@
+# Défi 13 : PostgreSQL en réplication maître/réplique, par la sous-charte postgres-replication incluse dans la charte globale.
+# Valeurs cumulatives : ce fichier contient l'état complet voulu à la fin du défi.
+# Utilisation : helm upgrade --install cinetint ../helm/cinetint -n u-XXX -f ../helm/cinetint/values-cours.yaml -f values-defi13.yaml
+
+global:
+  securite: false
+
+postgres:
+  mode: statefulset
+  persistance:
+    enabled: true
+
+postgres-replication:
+  enabled: true
+
+images:
+  tags:
+    front: v2
+    back: v1
+    qrGenerator: v1
+    qrVerifier: v1
+
+sondes:
+  startup: {enabled: true}
+  readiness: {enabled: true}
+  liveness: {enabled: true}
+
+hpa:
+  enabled: true
+
+networkPolicies:
+  postgres:
+    enabled: true
+  applicatives:
+    enabled: false
+
+ingress:
+  limites:
+    enabled: false
+
+hooks:
+  configMap:
+    enabled: false
+  sauvegarde:
+    enabled: false
+  testFumee:
+    enabled: false
+
+sauvegardes:
+  enabled: false
+  planifiee: false

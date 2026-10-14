@@ -1,0 +1,48 @@
+{{- if and .Values.sauvegardes.enabled (include "cinetint.baseInterne" .) }}
+# Défi 16 : sauvegarde planifiée de la base vers un volume dédié (PVC séparé de celui de PostgreSQL :
+# si le volume de la base est perdu, les sauvegardes survivent).
+# Restauration : voir k8s/defi16/restaurer-job.yaml et k8s/defi16/reponses.md.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "sauvegardes") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "sauvegarde") | nindent 4 }}
+  annotations:
+    # les sauvegardes survivent à "helm uninstall" : à supprimer à la main si on veut tout effacer
+    helm.sh/resource-policy: keep
+spec:
+  accessModes: [ReadWriteOnce]
+  {{- with .Values.sauvegardes.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.sauvegardes.taille }}
+{{- if .Values.sauvegardes.planifiee }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "sauvegarde") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "sauvegarde") | nindent 4 }}
+spec:
+  schedule: {{ .Values.sauvegardes.planification | quote }}
+  # deux sauvegardes ne se chevauchent jamais
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: {{ .Values.sauvegardes.historique }}
+  failedJobsHistoryLimit: {{ .Values.sauvegardes.historique }}
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            {{- include "cinetint.labels" (dict "ctx" . "c" "sauvegarde") | nindent 12 }}
+        spec:
+          {{- include "cinetint.podSauvegarde" (dict "ctx" . "etiquette" "planifiee") | nindent 10 }}
+{{- end }}
+{{- end }}

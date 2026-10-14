@@ -1,0 +1,96 @@
+{{- if .Values.ingress.enabled }}
+# Ingress (Défi 4 et 5) : remplace le nginx du docker-compose. Routage par préfixe d'URL :
+#   /api           -> back          (tampon coupé et délais longs pour les flux SSE)
+#   /qr            -> qr-generator
+#   /verification  -> qr-verifier
+#   /              -> front         (y compris /internal/..., que le front refuse en 404)
+# Les routes /internal du back ne sont jamais routées vers lui : elles ne servent qu'entre services.
+{{- $hote := .Values.ingress.host }}
+{{- $limites := .Values.ingress.limites }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "api") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "ingress") | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: {{ $limites.delaiLecture | quote }}
+    nginx.ingress.kubernetes.io/proxy-send-timeout: {{ $limites.delaiLecture | quote }}
+    {{- if $limites.enabled }}
+    nginx.ingress.kubernetes.io/limit-rps: {{ $limites.requetesParSeconde | quote }}
+    nginx.ingress.kubernetes.io/limit-connections: {{ $limites.connexionsParIp | quote }}
+    nginx.ingress.kubernetes.io/proxy-body-size: {{ $limites.tailleCorps | quote }}
+    {{- end }}
+    {{- if .Values.ingress.tls.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.clusterIssuer | quote }}
+    {{- end }}
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts: [{{ $hote | quote }}]
+      secretName: {{ .Values.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ $hote | quote }}
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "cinetint.nom" (dict "ctx" . "n" "back") }}
+                port: {number: {{ .Values.back.port }}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "site") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "ingress") | nindent 4 }}
+  annotations:
+    {{- if $limites.enabled }}
+    nginx.ingress.kubernetes.io/limit-rps: {{ $limites.requetesParSeconde | quote }}
+    nginx.ingress.kubernetes.io/limit-connections: {{ $limites.connexionsParIp | quote }}
+    nginx.ingress.kubernetes.io/proxy-body-size: {{ $limites.tailleCorps | quote }}
+    {{- end }}
+    {{- if .Values.ingress.tls.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.clusterIssuer | quote }}
+    {{- end }}
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts: [{{ $hote | quote }}]
+      secretName: {{ .Values.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ $hote | quote }}
+      http:
+        paths:
+          - path: /qr
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "cinetint.nom" (dict "ctx" . "n" "qr-generator") }}
+                port: {number: {{ .Values.qrGenerator.port }}}
+          - path: /verification
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "cinetint.nom" (dict "ctx" . "n" "qr-verifier") }}
+                port: {number: {{ .Values.qrVerifier.port }}}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "cinetint.nom" (dict "ctx" . "n" "front") }}
+                port: {number: {{ .Values.front.port }}}
+{{- end }}

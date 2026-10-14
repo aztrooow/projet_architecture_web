@@ -1,0 +1,109 @@
+{{- if .Values.redis.enabled }}
+# Redis (Défi 14) : verrous de sièges à expiration, compteurs de remplissage, pub/sub du temps réel.
+# Une seule instance : les verrous doivent être vus par toutes les répliques du back.
+{{- $nom := include "cinetint.nom" (dict "ctx" . "n" "redis") }}
+{{- if .Values.redis.persistance.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $nom }}-data
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "redis") | nindent 4 }}
+spec:
+  accessModes: [ReadWriteOnce]
+  {{- with .Values.redis.persistance.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.redis.persistance.taille }}
+---
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $nom }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "redis") | nindent 4 }}
+spec:
+  replicas: 1
+  # un seul pod à la fois : pas de montée en charge sur un volume ReadWriteOnce
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "cinetint.selecteur" (dict "ctx" . "c" "redis") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "cinetint.labels" (dict "ctx" . "c" "redis") | nindent 8 }}
+    spec:
+      {{- include "cinetint.pullSecrets" . | nindent 6 }}
+      automountServiceAccountToken: false
+      {{- include "cinetint.secPod" (dict "ctx" . "uid" 999) | nindent 6 }}
+      containers:
+        - name: redis
+          image: {{ .Values.images.redis }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          args:
+            - redis-server
+            - --maxmemory
+            - {{ .Values.redis.maxmemory | quote }}
+            - --maxmemory-policy
+            - {{ .Values.redis.politiqueEviction | quote }}
+            {{- if .Values.redis.persistance.enabled }}
+            - --appendonly
+            - "yes"
+            {{- else }}
+            - --save
+            - ""
+            - --appendonly
+            - "no"
+            {{- end }}
+          ports:
+            - name: redis
+              containerPort: 6379
+          resources:
+            {{- include "cinetint.ressources" (dict "ctx" . "comp" .Values.redis) | nindent 12 }}
+          {{- if .Values.sondes.readiness.enabled }}
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "redis-cli ping | grep -q PONG"]
+            periodSeconds: 5
+            timeoutSeconds: 3
+          {{- end }}
+          {{- if .Values.sondes.liveness.enabled }}
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "redis-cli ping | grep -q PONG"]
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 4
+          {{- end }}
+          {{- include "cinetint.secConteneur" . | nindent 10 }}
+          volumeMounts:
+            - {name: data, mountPath: /data}
+      volumes:
+        - name: data
+          {{- if .Values.redis.persistance.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ $nom }}-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $nom }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "redis") | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "cinetint.selecteur" (dict "ctx" . "c" "redis") | nindent 4 }}
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+{{- end }}

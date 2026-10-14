@@ -1,0 +1,18 @@
+# Défi 2 : Deployment (3 répliques, ressources) + Service ClusterIP + accès par kubectl proxy.
+
+kubectl apply -f deployment.yaml -n u-XXX
+kubectl apply -f service.yaml -n u-XXX
+kubectl get deployments,replicasets,pods,services,endpoints -n u-XXX -o wide
+kubectl top pods -n u-XXX            # nécessite metrics-server
+
+# accès par le proxy de l'API Kubernetes
+kubectl proxy &
+curl http://127.0.0.1:8001/api/v1/namespaces/u-XXX/services/csc8567/proxy/
+
+# la répartition de charge : plusieurs requêtes, puis les journaux de chaque Pod (--prefix indique le Pod qui a répondu)
+for i in 1 2 3 4 5 6 7 8 9; do curl -s -o /dev/null http://127.0.0.1:8001/api/v1/namespaces/u-XXX/services/csc8567/proxy/; done
+kubectl logs -l app=csc8567 -n u-XXX --prefix --tail=5
+
+# preuve de l'autoguérison : supprimer un pod, le Deployment le recrée
+kubectl delete $(kubectl get pods -l app=csc8567 -n u-XXX -o name | head -1) -n u-XXX
+kubectl get pods -n u-XXX -l app=csc8567

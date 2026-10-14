@@ -1,0 +1,63 @@
+# =====================================================================================
+# Sous-charte postgres-replication (Défi 13) : PostgreSQL en réplication en flux.
+#
+#   postgres-primaire-0  ->  base en lecture/écriture, service « postgres »
+#   postgres-replique-N  ->  copies en lecture seule, service « postgres-lecture »
+#
+# Elle est écrite à la main, sans charte tierce. Elle s'active depuis la charte globale avec
+# postgres-replication.enabled=true, ou seule :
+#   helm install pg k8s/helm/cinetint/charts/postgres-replication --set enabled=true --set creerSecret=true
+# =====================================================================================
+
+enabled: false
+
+# nombre de répliques (StatefulSet postgres-replique)
+repliques: 1
+
+base: cinetint
+utilisateur: cinetint
+# compte réservé à la réplication (droit REPLICATION, aucun droit sur les données)
+utilisateurReplication: replicateur
+
+# Secret qui contient POSTGRES_PASSWORD et REPLICATION_PASSWORD.
+# Vide : <prefixe>postgres-secrets. Avec creerSecret=true la sous-charte le crée (mots de passe générés).
+existingSecret: ""
+creerSecret: false
+
+image: postgres:17-alpine
+pullPolicy: IfNotPresent
+
+persistance:
+  taille: 100Mi       # un volume par pod (consigne du sujet : 0.1 Go)
+  storageClass: ""
+
+# réplication synchrone : le primaire attend la confirmation de la réplique avant de valider une écriture.
+# Plus sûr (aucune écriture perdue en cas de panne) mais une réplique en panne bloque les écritures.
+synchrone: false
+
+# réglages communs au primaire et aux répliques. max_connections et max_wal_senders d'une réplique
+# ne doivent pas être inférieurs à ceux du primaire (documentation PostgreSQL, Hot Standby).
+reglages:
+  shared_buffers: 32MB
+  max_connections: "100"
+  work_mem: 2MB
+  maintenance_work_mem: 16MB
+  max_wal_size: 48MB
+  min_wal_size: 32MB
+  # réplication
+  wal_level: replica
+  max_wal_senders: "5"
+  max_replication_slots: "5"
+  hot_standby: "on"
+  hot_standby_feedback: "on"
+  # protège le petit volume : un slot qui retarde de plus de 32 Mo de journal est abandonné
+  max_slot_wal_keep_size: 32MB
+
+ressources:
+  requests: {cpu: 100m, memory: 100Mi}
+  limits: {cpu: 200m, memory: 200Mi}
+
+# valeurs relayées par la charte globale
+global:
+  prefixe: ""
+  securite: true

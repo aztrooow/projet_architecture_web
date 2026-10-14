@@ -1,0 +1,53 @@
+# Défi 8 : base de la mise à jour progressive (Rolling Update). Le passage du front en v2 se fait ensuite avec
+# --set images.tags.front=v2 (voir commandes.txt). La readinessProbe est indispensable : sans elle, Kubernetes
+# enverrait du trafic à un pod pas encore prêt.
+# Valeurs cumulatives : ce fichier contient l'état complet voulu à la fin du défi.
+# Utilisation : helm upgrade --install cinetint ../helm/cinetint -n u-XXX -f ../helm/cinetint/values-cours.yaml -f values-defi8.yaml
+
+global:
+  securite: false
+
+postgres:
+  mode: statefulset
+  persistance:
+    enabled: true
+
+postgres-replication:
+  enabled: false
+
+images:
+  tags:
+    front: v1
+    back: v1
+    qrGenerator: v1
+    qrVerifier: v1
+
+sondes:
+  startup: {enabled: false}
+  readiness: {enabled: true}
+  liveness: {enabled: false}
+
+hpa:
+  enabled: false
+
+networkPolicies:
+  postgres:
+    enabled: false
+  applicatives:
+    enabled: false
+
+ingress:
+  limites:
+    enabled: false
+
+hooks:
+  configMap:
+    enabled: false
+  sauvegarde:
+    enabled: false
+  testFumee:
+    enabled: false
+
+sauvegardes:
+  enabled: false
+  planifiee: false

@@ -1,0 +1,15 @@
+# Valeurs pour le cluster kind de validation locale (voir k8s/README.md, section « Valider en local »).
+images:
+  registre: cinetint-local                    # images chargées avec « kind load docker-image »
+  pullPolicy: IfNotPresent
+
+ingress:
+  className: nginx
+  host: cinetint.test                         # utilisé avec curl -H "Host: cinetint.test" http://localhost:8080/
+
+networkPolicies:
+  namespaceIngress: ingress-nginx             # sur kind, le contrôleur est dans ingress-nginx
+
+# pas de réseau externe garanti pendant les tests : semaine fictive plutôt que l'import du CGR
+back:
+  programmeSource: demo

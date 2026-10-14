@@ -1,0 +1,44 @@
+# Défi 5 : front (équivalent « public »). Pages Jinja rendues côté serveur + application React.
+# 3 répliques, ressources imposées par le sujet : 100m CPU / 100Mi demandés, 200m / 200Mi en limite.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front
+  labels:
+    app: front
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: front
+  template:
+    metadata:
+      labels:
+        app: front
+    spec:
+      containers:
+        - name: front
+          image: REGISTRE_IMAGES/cinetint-front:v1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: API_INTERNE
+              value: http://back:8000        # DNS du Service « back » (CoreDNS)
+          resources:
+            requests: {cpu: 100m, memory: 100Mi}
+            limits: {cpu: 200m, memory: 200Mi}
+---
+# Service ClusterIP : IP virtuelle + nom DNS « front », cible de l'Ingress.
+apiVersion: v1
+kind: Service
+metadata:
+  name: front
+  labels:
+    app: front
+spec:
+  type: ClusterIP
+  selector:
+    app: front
+  ports:
+    - port: 8080
+      targetPort: 8080

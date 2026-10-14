@@ -1,0 +1,25 @@
+# Pod d'essai (défi 10) : sa liveness probe vise une route qui n'existe pas (/inexistante).
+# Le kubelet la trouve en échec (HTTP 404) trois fois de suite, tue le conteneur et le redémarre :
+# RESTARTS augmente, puis le pod passe en CrashLoopBackOff. À supprimer après la démonstration.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: liveness-en-echec
+  labels:
+    app: liveness-en-echec
+spec:
+  containers:
+    - name: demo
+      image: xhelozs/csc8567:v1          # image Flask des enseignants, port 5000
+      ports:
+        - containerPort: 5000
+      livenessProbe:
+        httpGet:
+          path: /inexistante
+          port: 5000
+        initialDelaySeconds: 3
+        periodSeconds: 5
+        failureThreshold: 3
+      resources:
+        requests: {cpu: 10m, memory: 32Mi}
+        limits: {cpu: 100m, memory: 100Mi}

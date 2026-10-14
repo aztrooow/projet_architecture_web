@@ -1,0 +1,227 @@
+# =====================================================================================
+# Valeurs par défaut de la charte CinetINT.
+#
+# La charte décrit l'infrastructure complète : front, back, qr-generator, qr-verifier,
+# Redis et PostgreSQL, avec Ingress, HPA, sondes, NetworkPolicy, hooks et sauvegardes.
+# Chaque fonction se règle ici ; les fichiers values-defiN.yaml des dossiers k8s/defiN
+# activent les options défi après défi, et values-cours.yaml adapte la charte au
+# cluster du cours (namespace, domaine, registre d'images).
+# =====================================================================================
+
+global:
+  # préfixe de tous les noms de ressources. Vide : les services s'appellent simplement
+  # front, back, qr-generator, qr-verifier, redis, postgres (un seul déploiement par namespace).
+  # Pour plusieurs déploiements dans le même namespace, mettre par exemple "recette-".
+  prefixe: ""
+  # durcissement (Défi 18) : utilisateur non root, capacités retirées, système de fichiers en
+  # lecture seule, profil seccomp. Relayé à la sous-charte de réplication.
+  securite: true
+
+# ------------------------------------------------------------------------------ images
+images:
+  # <registre>/cinetint-front:<tag>, etc. Pour le cluster du cours : ghcr.io/eldertek (public)
+  registre: cinetint-local
+  pullPolicy: IfNotPresent
+  # noms de Secrets de type docker-registry si le registre est privé
+  pullSecrets: []
+  # on change de tag à chaque nouvelle image (Défi 3 et Défi 8) : un tag déjà en cache n'est pas retéléchargé
+  tags:
+    front: v1
+    back: v1
+    qrGenerator: v1
+    qrVerifier: v1
+  postgres: postgres:17-alpine
+  redis: redis:8-alpine
+  # image des tâches ponctuelles (pg_dump, pg_restore) : même version majeure que le serveur
+  outils: postgres:17-alpine
+  # image des hooks qui écrivent dans une ConfigMap (kubectl + shell)
+  kubectl: alpine/kubectl:1.37.1
+
+# ------------------------------------------------------------------------------ ressources
+# Consigne du sujet pour front, back et base : 1/10 de CPU et 100 Mo demandés, 1/5 de CPU et 200 Mo en limite.
+ressources:
+  defaut:
+    requests: {cpu: 100m, memory: 100Mi}
+    limits: {cpu: 200m, memory: 200Mi}
+
+# ------------------------------------------------------------------------------ composants applicatifs
+front:
+  replicas: 3
+  port: 8080
+  ressources: {}          # vide = ressources.defaut
+
+back:
+  replicas: 3
+  port: 8000
+  # cgr : programmation réelle du CGR Évry 2 ; demo : semaine fictive ; aucune : rien
+  programmeSource: cgr
+  donneesDemo: "true"
+  ressources: {}
+
+qrGenerator:
+  replicas: 2
+  port: 8001
+  ressources: {}
+
+qrVerifier:
+  replicas: 2
+  port: 8002
+  ressources: {}
+
+# répartition des répliques sur les nœuds (un nœud qui tombe n'emporte pas tous les pods d'un service)
+repartition:
+  enabled: true
+
+# Rolling Update (Défi 8) : un pod de plus à la fois, jamais un pod de moins
+miseAJour:
+  maxSurge: 1
+  maxUnavailable: 0
+  minReadySeconds: 5
+  progressDeadlineSeconds: 300
+  revisionHistoryLimit: 10
+
+# ------------------------------------------------------------------------------ secrets
+# Tout ce qui est vide est généré au premier "helm install" puis conservé aux "helm upgrade"
+# (lookup du Secret existant). Pour fixer une valeur : la renseigner ici ou avec --set.
+secrets:
+  serviceToken: ""
+  jwtSecret: ""
+  gerantMotDePasse: ""
+  controleurMotDePasse: ""
+  # clé privée Ed25519 des billets (PEM). Vide : générée. Elle doit être COMMUNE à toutes les
+  # répliques du qr-generator, sinon un billet signé par l'une serait refusé par les autres.
+  cleSignature: ""
+
+# ------------------------------------------------------------------------------ PostgreSQL
+postgres:
+  # deployment : Défi 5 et 6, sans volume (les données disparaissent avec le pod)
+  # statefulset : Défi 7, un pod, un volume persistant, service headless
+  # externe : pas de PostgreSQL dans la charte, on se connecte à postgres.externe.hote
+  #           (Défi 12 : base en réplication écrite à la main, voir k8s/defi12)
+  # La réplication de la charte (Défi 13) s'active avec postgres-replication.enabled=true,
+  # elle remplace alors ce bloc.
+  mode: statefulset
+  base: cinetint
+  utilisateur: cinetint
+  port: 5432
+  motDePasse: ""          # vide = généré
+  externe:
+    hote: postgres
+  persistance:
+    enabled: true
+    taille: 100Mi         # consigne du sujet : 0.1 Go
+    storageClass: ""      # vide = classe par défaut du cluster
+  # réglages du serveur, adaptés à 200 Mo de mémoire et à un volume de 100 Mo
+  reglages:
+    shared_buffers: 32MB
+    max_connections: "100"
+    work_mem: 2MB
+    maintenance_work_mem: 16MB
+    max_wal_size: 48MB
+    min_wal_size: 32MB
+  ressources: {}
+
+# Défi 13 : PostgreSQL maître/réplique, sous-charte rangée dans charts/postgres-replication.
+# Quand elle est activée, elle remplace entièrement le bloc postgres ci-dessus : le service
+# "postgres" désigne alors le primaire (lecture/écriture), "postgres-lecture" les répliques.
+# Toutes ses options sont décrites dans charts/postgres-replication/values.yaml.
+postgres-replication:
+  enabled: false
+  repliques: 1
+  # Secret commun (mots de passe générés par cette charte). Adapter si global.prefixe est utilisé.
+  existingSecret: cinetint-secrets
+
+redis:
+  enabled: true
+  # Redis ne sert ici ni de base ni de cache de pages : verrous de sièges à expiration, compteurs,
+  # pub/sub temps réel (voir k8s/defi14). Il n'a pas besoin de survivre à un redémarrage.
+  maxmemory: 100mb
+  # noeviction : plutôt une erreur franche qu'un verrou de siège évincé en silence
+  politiqueEviction: noeviction
+  persistance:
+    enabled: false
+    taille: 100Mi
+    storageClass: ""
+  ressources: {}
+
+# ------------------------------------------------------------------------------ Ingress (Défi 4)
+ingress:
+  enabled: true
+  className: nginx
+  # adresse du site. Cluster du cours : django.<groupe>.csc8567.luxbulb.org
+  host: django.groupe.csc8567.luxbulb.org
+  tls:
+    enabled: false
+    secretName: cinetint-tls
+    # nom d'un ClusterIssuer cert-manager, si le cluster en propose un
+    clusterIssuer: ""
+  annotations: {}
+  # limites de débit et de taille (Défi 18), appliquées par le contrôleur nginx
+  limites:
+    enabled: true
+    requetesParSeconde: 20
+    connexionsParIp: 30
+    tailleCorps: 1m
+    delaiLecture: "3600"    # secondes : les flux SSE ne se terminent jamais
+
+# ------------------------------------------------------------------------------ mise à l'échelle (Défi 9)
+hpa:
+  enabled: true
+  composants: [front, back]
+  cpuMoyen: 60            # % de la demande de CPU (requests.cpu)
+  min: 3
+  max: 10
+  # réduction lente : 5 min par défaut dans Kubernetes, on garde 60 s pour que la démonstration se voie
+  stabilisationReduction: 60
+
+# ------------------------------------------------------------------------------ sondes (Défi 10)
+sondes:
+  startup: {enabled: true}
+  readiness: {enabled: true}
+  liveness: {enabled: true}
+  # route testée par la liveness du back. /api/sante vérifie aussi PostgreSQL et Redis : elle sert à la
+  # readiness et au démarrage (retirer le pod du Service tant que la base est absente), mais pas à la
+  # liveness. Mesuré sur kind : base arrêtée 2 minutes avec /api/sante en liveness, les trois pods du
+  # back passent en CrashLoopBackOff pour rien (redémarrer le back ne répare pas la base).
+  # /api/docs répond sans toucher la base : elle prouve seulement que le processus répond.
+  livenessBack: /api/docs
+
+# ------------------------------------------------------------------------------ NetworkPolicy (Défi 11, 18)
+networkPolicies:
+  # seuls les pods listés ici joignent PostgreSQL. Dans le code, seul le back lit la base ;
+  # ajouter "front" reproduit la consigne du sujet (public + api) si le front la lit un jour.
+  postgres:
+    enabled: true
+    composantsAutorises: [back, sauvegarde]
+  # isole aussi Redis, le back, le qr-generator, le qr-verifier et le front
+  applicatives:
+    enabled: true
+  # namespace où tourne le contrôleur Ingress : ingress-nginx sur kind, kube-system sur RKE2
+  namespaceIngress: kube-system
+
+# ------------------------------------------------------------------------------ hooks Helm (Défi 15)
+hooks:
+  # Jobs avant/après chaque installation ou mise à jour qui écrivent le carnet de déploiement dans une ConfigMap
+  configMap:
+    enabled: true
+    # crée le ServiceAccount, le Role et le RoleBinding (limités au namespace) qu'il faut pour écrire la ConfigMap
+    rbac: true
+    serviceAccount: cinetint-hooks
+  # sauvegarde pg_dump juste avant et juste après chaque "helm upgrade"
+  sauvegarde:
+    enabled: true
+  # test de fumée après le déploiement (sondes des quatre services)
+  testFumee:
+    enabled: true
+
+# ------------------------------------------------------------------------------ sauvegardes (Défi 15, 16)
+sauvegardes:
+  enabled: true
+  taille: 200Mi
+  storageClass: ""
+  # CronJob de sauvegarde planifiée (Défi 16). Sans lui, le volume ne sert qu'aux sauvegardes des hooks (Défi 15).
+  planifiee: true
+  # tous les jours à 03h00 (UTC, fuseau du cluster)
+  planification: "0 3 * * *"
+  conserver: 7
+  historique: 3

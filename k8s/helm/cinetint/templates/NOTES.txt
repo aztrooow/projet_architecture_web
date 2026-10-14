@@ -1,0 +1,26 @@
+CinetINT {{ .Chart.Version }} : release {{ .Release.Name }} dans le namespace {{ .Release.Namespace }}
+
+Site            {{ ternary "https" "http" .Values.ingress.tls.enabled }}://{{ .Values.ingress.host }}/
+API (docs)      {{ ternary "https" "http" .Values.ingress.tls.enabled }}://{{ .Values.ingress.host }}/api/docs
+
+Etat            kubectl get pods,svc,ingress,hpa -n {{ .Release.Namespace }}
+Test de fumee   helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+{{- if .Values.hooks.configMap.enabled }}
+Carnet          kubectl get configmap {{ include "cinetint.nomApp" (dict "ctx" . "n" "deploiement") }} -n {{ .Release.Namespace }} -o jsonpath='{.data}'
+{{- end }}
+
+Comptes du personnel (mots de passe generes, a ne pas diffuser) :
+  gerant       kubectl get secret {{ include "cinetint.nomApp" (dict "ctx" . "n" "secrets") }} -n {{ .Release.Namespace }} -o jsonpath='{.data.GERANT_MOT_DE_PASSE}' | base64 -d; echo
+  controleur   kubectl get secret {{ include "cinetint.nomApp" (dict "ctx" . "n" "secrets") }} -n {{ .Release.Namespace }} -o jsonpath='{.data.CONTROLEUR_MOT_DE_PASSE}' | base64 -d; echo
+
+{{- if not .Values.ingress.enabled }}
+
+L'Ingress est desactive : acces par kubectl port-forward service/{{ include "cinetint.nom" (dict "ctx" . "n" "front") }} 8080:{{ .Values.front.port }} -n {{ .Release.Namespace }}
+{{- end }}
+{{- if (index .Values "postgres-replication" "enabled") }}
+
+PostgreSQL en replication : ecriture sur le service {{ include "cinetint.nom" (dict "ctx" . "n" "postgres") }}, lecture sur {{ include "cinetint.nom" (dict "ctx" . "n" "postgres-lecture") }}.
+{{- end }}
+
+Rappel : pas de --wait avec cette charte (le volume des sauvegardes n'est lie qu'au premier Pod qui s'en sert) ;
+le hook post-deploiement attend les quatre services.

@@ -1,0 +1,29 @@
+# Défi 3 : site (Pod front + back), base PostgreSQL, Redis. Remplacer u-XXX par le namespace du groupe.
+# Les manifests contiennent REGISTRE_IMAGES : appliquer.sh le remplace par le registre d images du groupe (ghcr.io/eldertek, public).
+
+# 1. images (construites une fois, depuis la racine du dépôt) puis envoyées sur le registre public ghcr.io/eldertek
+REGISTRE=ghcr.io/eldertek ./k8s/images.sh tout
+
+# 2. Secrets (mots de passe générés, jamais écrits dans le dépôt)
+NAMESPACE=u-XXX ./k8s/appliquer.sh secrets
+
+# 3. déploiement : la base et Redis d'abord, puis le site (chaque ressource dans son fichier)
+kubectl apply -n u-XXX -f postgres-deployment.yaml -f postgres-service.yaml
+kubectl apply -n u-XXX -f redis.yaml
+sed 's#REGISTRE_IMAGES#ghcr.io/eldertek#g' site-deployment.yaml | kubectl apply -n u-XXX -f -
+kubectl apply -n u-XXX -f site-service.yaml
+# équivalent en une commande : NAMESPACE=u-XXX REGISTRE=ghcr.io/eldertek ./k8s/appliquer.sh defi3
+
+# 4. vérification
+kubectl get pods,svc,endpoints -n u-XXX -o wide
+kubectl top pods -n u-XXX --containers
+kubectl logs deployment/site -c back -n u-XXX
+
+# 5. accès par kubectl proxy (le port du Service est nommé : on le précise)
+kubectl proxy &
+curl http://127.0.0.1:8001/api/v1/namespaces/u-XXX/services/site:front/proxy/
+curl http://127.0.0.1:8001/api/v1/namespaces/u-XXX/services/site:api/proxy/api/sante
+curl http://127.0.0.1:8001/api/v1/namespaces/u-XXX/services/site:api/proxy/api/programme
+
+# 6. nom DNS vu depuis un Pod
+kubectl run dns -n u-XXX --rm -it --restart=Never --image=busybox:1.37 -- nslookup postgres

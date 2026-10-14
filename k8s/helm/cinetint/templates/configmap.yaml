@@ -1,0 +1,31 @@
+# Défi 6 : la ConfigMap porte les informations de connexion entre le site et la base
+# (hôte, port, nom, utilisateur) ainsi que les adresses internes des services.
+# Le mot de passe de la base n'y figure pas : il est dans le Secret (voir secrets.yaml).
+{{- $pg := .Values.postgres }}
+{{- if include "cinetint.replication" . }}{{ $pg = index .Values "postgres-replication" }}{{ end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "config") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "config") | nindent 4 }}
+data:
+  # connexion à PostgreSQL
+  POSTGRES_HOST: {{ include "cinetint.hotePostgres" . | quote }}
+  POSTGRES_PORT: {{ .Values.postgres.port | quote }}
+  POSTGRES_DB: {{ $pg.base | quote }}
+  POSTGRES_USER: {{ $pg.utilisateur | quote }}
+  # Redis et services internes (noms DNS des Services du namespace)
+  REDIS_HOST: {{ include "cinetint.nom" (dict "ctx" . "n" "redis") | quote }}
+  REDIS_URL: {{ printf "redis://%s:6379/0" (include "cinetint.nom" (dict "ctx" . "n" "redis")) | quote }}
+  QR_GENERATOR_URL: {{ printf "http://%s:%d" (include "cinetint.nom" (dict "ctx" . "n" "qr-generator")) (.Values.qrGenerator.port | int) | quote }}
+  BACK_URL: {{ printf "http://%s:%d" (include "cinetint.nom" (dict "ctx" . "n" "back")) (.Values.back.port | int) | quote }}
+  API_INTERNE: {{ printf "http://%s:%d" (include "cinetint.nom" (dict "ctx" . "n" "back")) (.Values.back.port | int) | quote }}
+  # adresses vues par le navigateur : vides, tout passe par l'Ingress sur le même domaine
+  URL_API: ""
+  URL_QR: ""
+  URL_VERIFICATION: ""
+  # origine autorisée pour les appels directs depuis le navigateur
+  CORS_ORIGINS: {{ printf "%s://%s" (ternary "https" "http" .Values.ingress.tls.enabled) .Values.ingress.host | quote }}
+  PROGRAMME_SOURCE: {{ .Values.back.programmeSource | quote }}
+  DONNEES_DEMO: {{ .Values.back.donneesDemo | quote }}

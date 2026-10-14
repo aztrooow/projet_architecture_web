@@ -1,0 +1,45 @@
+# Défi 5 : l'Ingress remplace le nginx du docker-compose. Même routage par préfixe d'URL :
+#   /api -> back, /qr -> qr-generator, /verification -> qr-verifier, tout le reste -> front.
+# Les routes /internal du back ne sont jamais routées vers lui (elles ne servent qu'entre services) :
+# /internal/... tombe sur le front, qui répond 404.
+# Deux Ingress : l'annotation de tampon ne doit s'appliquer qu'à l'API (flux SSE).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: HOTE_SITE
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service: {name: back, port: {number: 8000}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: site
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: HOTE_SITE
+      http:
+        paths:
+          - path: /qr
+            pathType: Prefix
+            backend:
+              service: {name: qr-generator, port: {number: 8001}}
+          - path: /verification
+            pathType: Prefix
+            backend:
+              service: {name: qr-verifier, port: {number: 8002}}
+          - path: /
+            pathType: Prefix
+            backend:
+              service: {name: front, port: {number: 8080}}

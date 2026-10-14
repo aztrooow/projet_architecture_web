@@ -1,0 +1,100 @@
+{{- if .Values.enabled }}
+# Répliques : un StatefulSet. Chaque pod a son volume. Au premier démarrage, l'initContainer copie
+# le primaire avec pg_basebackup (-R écrit standby.signal et primary_conninfo) ; PostgreSQL démarre
+# ensuite en « hot standby » : il rejoue en continu le journal (WAL) du primaire et répond aux lectures.
+{{- $nom := include "pgr.nom" (dict "ctx" . "n" "postgres-replique") }}
+{{- $primaire := include "pgr.nom" (dict "ctx" . "n" "postgres-primaire") }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $nom }}
+  labels:
+    {{- include "pgr.labels" (dict "ctx" . "role" "replique") | nindent 4 }}
+spec:
+  replicas: {{ .Values.repliques }}
+  serviceName: {{ $nom }}
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      {{- include "pgr.selecteur" (dict "ctx" . "role" "replique") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "pgr.labels" (dict "ctx" . "role" "replique") | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      {{- include "pgr.secPod" . | nindent 6 }}
+      initContainers:
+        - name: copie-du-primaire
+          image: {{ .Values.image }}
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          env:
+            {{- include "pgr.env" . | nindent 12 }}
+            - name: PRIMAIRE
+              value: {{ printf "%s-0.%s" $primaire $primaire }}
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              if [ -s "$PGDATA/PG_VERSION" ]; then
+                echo "[replique] données déjà présentes, pas de nouvelle copie"
+                exit 0
+              fi
+              echo "[replique] attente du primaire $PRIMAIRE"
+              until pg_isready -q -h "$PRIMAIRE" -p 5432 -U "$POSTGRES_USER"; do sleep 2; done
+              # un slot de réplication par pod : le primaire garde le journal tant que la réplique ne l'a pas lu
+              slot="$(echo "$HOSTNAME" | tr '-' '_')"
+              PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$PRIMAIRE" -U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1 -c \
+                "SELECT pg_create_physical_replication_slot('$slot') WHERE NOT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = '$slot')"
+              mkdir -p "$PGDATA"
+              chmod 700 "$PGDATA"
+              echo "[replique] copie de base depuis le primaire (slot $slot)"
+              PGPASSWORD="$REPLICATION_PASSWORD" PGAPPNAME="$HOSTNAME" pg_basebackup \
+                -h "$PRIMAIRE" -p 5432 -U "$REPLICATION_USER" -D "$PGDATA" \
+                -X stream -S "$slot" -R -P -v
+              echo "[replique] copie terminée"
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 200m, memory: 200Mi}
+          {{- include "pgr.secConteneur" . | nindent 10 }}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+            - {name: tmp, mountPath: /tmp}
+      containers:
+        - name: postgres
+          image: {{ .Values.image }}
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          args:
+            {{- include "pgr.args" . | nindent 12 }}
+          env:
+            {{- include "pgr.env" . | nindent 12 }}
+          ports:
+            - {name: postgres, containerPort: 5432}
+          resources:
+            {{- toYaml .Values.ressources | nindent 12 }}
+          {{- include "pgr.sondes" . | nindent 10 }}
+          {{- include "pgr.secConteneur" . | nindent 10 }}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+            - {name: run, mountPath: /var/run/postgresql}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "pgr.labels" (dict "ctx" . "role" "replique") | nindent 10 }}
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- with .Values.persistance.storageClass }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistance.taille }}
+{{- end }}

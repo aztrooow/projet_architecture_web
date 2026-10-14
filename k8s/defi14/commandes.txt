@@ -1,0 +1,23 @@
+# Défi 14 : Redis intégré à la charte et isolé par NetworkPolicy.
+
+helm upgrade --install cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi14.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --timeout 10m
+
+# le composant
+kubectl get deploy,pod,svc,networkpolicy -n u-XXX -l app.kubernetes.io/component=redis
+kubectl exec -n u-XXX deploy/redis -- redis-cli CONFIG GET maxmemory-policy
+kubectl exec -n u-XXX deploy/redis -- redis-cli INFO memory
+
+# démonstration de ses trois rôles (verrous à expiration, compteurs, pub/sub vers le flux SSE) et de la NetworkPolicy
+N=u-XXX BASE=https://django.MONGROUPE.csc8567.luxbulb.org ../outils/demo-redis.sh
+
+# observation à la main : pendant qu'une commande est en attente de paiement
+kubectl exec -n u-XXX deploy/redis -- redis-cli --scan --pattern 'verrou:*'
+kubectl exec -n u-XXX deploy/redis -- redis-cli TTL 'verrou:{1}:327'
+kubectl exec -n u-XXX deploy/redis -- redis-cli PUBSUB NUMPAT
+kubectl exec -n u-XXX deploy/redis -- redis-cli CLIENT LIST | grep -c psub
+# un navigateur (ou curl) abonné au flux d'une séance reçoit les changements d'état des sièges
+curl -N https://django.MONGROUPE.csc8567.luxbulb.org/api/seances/1/flux

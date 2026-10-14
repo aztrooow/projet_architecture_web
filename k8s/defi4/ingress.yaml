@@ -1,0 +1,33 @@
+# Défi 4 : un Ingress pour rendre le site accessible depuis Internet.
+# Un Ingress est une table de routage HTTP(S) : il ne fait rien tout seul, c'est le contrôleur Ingress
+# du cluster (rke2-ingress-nginx-controller, un nginx dans le namespace kube-system) qui la lit et se
+# configure. Ce contrôleur est lui-même exposé par un Service LoadBalancer dont MetalLB attribue
+# l'IP publique (157.159.11.201). Le nom DNS django.<groupe>.csc8567.luxbulb.org pointe vers cette IP
+# (entrée créée par les enseignants).
+# Chemin  /api -> port 8000 du Service « site » (conteneur back) ; tout le reste -> port 8080 (conteneur front).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: site
+  annotations:
+    # flux temps réel (SSE) : pas de tampon, délais de lecture longs
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+spec:
+  ingressClassName: nginx            # IngressClass créée par rke2-ingress-nginx
+  rules:
+    - host: HOTE_SITE
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: site
+                port: {number: 8000}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: site
+                port: {number: 8080}

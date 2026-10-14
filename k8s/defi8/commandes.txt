@@ -1,0 +1,36 @@
+# Défi 8 : mise à jour progressive (Rolling Update) du front, de la v1 à la v2 (la v2 ajoute la page /infos).
+
+# 0. état de départ : valeurs du défi 8 (défi 7 plus la readinessProbe, requise pour une mise à jour sans interruption), front en v1
+helm upgrade --install cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi8.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --timeout 10m
+
+# 1. construire et envoyer l'image v2 du front (le code de la v2 contient la page /infos)
+TAG=v2 REGISTRE=ghcr.io/eldertek ../images.sh tout front
+
+# 2. dans un second terminal : une boucle de requêtes en continu (aucune ne doit échouer)
+while true; do curl -s -o /dev/null -w '%{http_code} ' https://django.MONGROUPE.csc8567.luxbulb.org/; sleep 0.2; done
+
+# 3. la mise à jour : on change seulement le tag de l'image du front
+helm upgrade cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi8.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --set images.tags.front=v2
+# équivalent sans Helm :
+# kubectl set image deployment/front front=ghcr.io/eldertek/cinetint-front:v2 -n u-XXX
+kubectl annotate deployment front -n u-XXX kubernetes.io/change-cause='front v2 : page /infos' --overwrite
+
+# 4. suivre le déroulement
+kubectl rollout status deployment/front -n u-XXX
+kubectl get pods -n u-XXX -l app.kubernetes.io/component=front -w
+kubectl get replicaset -n u-XXX -l app.kubernetes.io/component=front
+kubectl rollout history deployment/front -n u-XXX
+curl -s -o /dev/null -w '%{http_code}\n' https://django.MONGROUPE.csc8567.luxbulb.org/infos       # 404 en v1, 200 en v2
+
+# 5. retour arrière (le ReplicaSet de la v1 est conservé à 0 pod), puis de nouveau la v2
+kubectl rollout undo deployment/front -n u-XXX
+kubectl rollout status deployment/front -n u-XXX
+kubectl set image deployment/front front=ghcr.io/eldertek/cinetint-front:v2 -n u-XXX

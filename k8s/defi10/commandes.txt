@@ -1,0 +1,25 @@
+# Défi 10 : sondes startup, readiness et liveness sur chaque conteneur.
+
+helm upgrade --install cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi10.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --timeout 10m
+
+# vérification des sondes déclarées, une par composant
+kubectl describe pod -n u-XXX -l app.kubernetes.io/component=back | grep -E 'Liveness|Readiness|Startup'
+kubectl describe pod -n u-XXX -l app.kubernetes.io/component=front | grep -E 'Liveness|Readiness|Startup'
+kubectl describe pod -n u-XXX postgres-0 | grep -E 'Liveness|Readiness|Startup'
+kubectl describe pod -n u-XXX -l app.kubernetes.io/component=redis | grep -E 'Liveness|Readiness'
+
+# démonstration 1 : la base s'arrête. Le back n'est plus Ready (il sort du Service) mais n'est PAS redémarré.
+kubectl scale statefulset postgres --replicas=0 -n u-XXX
+kubectl get pods -n u-XXX -l app.kubernetes.io/component=back -w
+kubectl get endpoints back -n u-XXX
+kubectl scale statefulset postgres --replicas=1 -n u-XXX
+
+# démonstration 2 : une liveness en échec fait redémarrer le conteneur (pod d'essai dont la sonde vise une route inexistante)
+kubectl apply -f exemple-liveness-en-echec.yaml -n u-XXX
+kubectl get pod liveness-en-echec -n u-XXX -w
+kubectl describe pod liveness-en-echec -n u-XXX | tail -8
+kubectl delete -f exemple-liveness-en-echec.yaml -n u-XXX

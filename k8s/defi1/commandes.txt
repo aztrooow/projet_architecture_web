@@ -1,0 +1,15 @@
+# Défi 1 : premier Pod, accessible par port-forward.
+# Commandes exécutées dans l'ordre (namespace du groupe : remplacer u-XXX).
+# Image des enseignants : xhelozs/csc8567:v1 (Flask, port 5000).
+
+kubectl get pods -n u-XXX
+kubectl create deployment csc8567 --image=xhelozs/csc8567:v1 -n u-XXX
+kubectl get deployments,pods -n u-XXX -o wide
+kubectl rollout status deployment/csc8567 -n u-XXX
+kubectl logs deployment/csc8567 -n u-XXX
+
+# nom du pod créé par le Deployment (suffixe aléatoire)
+kubectl get pods -n u-XXX -l app=csc8567
+kubectl port-forward pods/csc8567-<suffixe-du-pod> 8080:5000 -n u-XXX
+# dans un autre terminal : le site est visible sur http://localhost:8080/
+curl http://localhost:8080/

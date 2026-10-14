@@ -1,0 +1,15 @@
+# Défi 3 : Service ClusterIP de la base. Le DNS "postgres" (postgres.<namespace>.svc.cluster.local)
+# pointe vers son IP virtuelle ; kube-proxy la redirige vers le Pod.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432

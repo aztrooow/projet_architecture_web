@@ -1,0 +1,33 @@
+# Défi 11 : NetworkPolicy, seuls les pods autorisés joignent PostgreSQL.
+
+helm upgrade --install cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi11.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --timeout 10m
+
+# la règle
+kubectl get networkpolicy -n u-XXX
+kubectl describe networkpolicy cinetint-postgres-acces -n u-XXX
+
+# test 1 : un pod portant l'étiquette du back peut ouvrir une connexion vers la base
+kubectl run test-back -n u-XXX --rm -it --restart=Never --image=postgres:17-alpine \
+  --labels=app.kubernetes.io/instance=cinetint,app.kubernetes.io/component=back \
+  --command -- nc -zv -w 4 postgres.u-XXX.svc.cluster.local 5432
+
+# test 2 : un pod quelconque du même namespace est bloqué (timeout)
+kubectl run test-anonyme -n u-XXX --rm -it --restart=Never --image=postgres:17-alpine \
+  --command -- nc -zv -w 4 postgres.u-XXX.svc.cluster.local 5432
+
+# test 3 : le front est bloqué aussi (il ne lit pas la base : il passe par l'API du back)
+kubectl run test-front -n u-XXX --rm -it --restart=Never --image=postgres:17-alpine \
+  --labels=app.kubernetes.io/instance=cinetint,app.kubernetes.io/component=front \
+  --command -- nc -zv -w 4 postgres.u-XXX.svc.cluster.local 5432
+
+# test 4 : un pod d'un AUTRE namespace est bloqué (à lancer depuis un autre namespace, ou avec l'aide d'un autre groupe)
+kubectl run test-ailleurs -n AUTRE_NAMESPACE --rm -it --restart=Never --image=postgres:17-alpine \
+  --command -- nc -zv -w 4 postgres.u-XXX.svc.cluster.local 5432
+
+# le site fonctionne toujours
+python3 ../outils/parcours.py https://django.MONGROUPE.csc8567.luxbulb.org \
+  --controleur "$(kubectl get secret cinetint-secrets -n u-XXX -o jsonpath='{.data.CONTROLEUR_MOT_DE_PASSE}' | base64 -d)"

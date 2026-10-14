@@ -1,0 +1,19 @@
+# Défi 3 : Service ClusterIP du site, joignable par kube-proxy.
+# Deux ports : 8080 vers le conteneur front, 8000 vers le conteneur back du même Pod.
+apiVersion: v1
+kind: Service
+metadata:
+  name: site
+  labels:
+    app: site
+spec:
+  type: ClusterIP
+  selector:
+    app: site
+  ports:
+    - name: front
+      port: 8080
+      targetPort: 8080
+    - name: api
+      port: 8000
+      targetPort: 8000

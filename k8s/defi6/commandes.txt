@@ -1,0 +1,32 @@
+# Défi 6 : charte Helm. Remplacer u-XXX et le nom de groupe.
+# La charte est dans ../helm/cinetint (templates + values.yaml). Pas de --wait : les sondes et le hook de test de fumée
+# font office de barrière (voir ../README.md).
+
+# 0. repartir d'un namespace propre (retirer les ressources du défi 5)
+NAMESPACE=u-XXX ../appliquer.sh defi5 supprimer
+kubectl delete secret cinetint-secrets cinetint-cle -n u-XXX --ignore-not-found
+
+# 1. contrôle de la charte avant de l'installer
+helm lint ../helm/cinetint -f ../helm/cinetint/values-cours.yaml -f values-defi6.yaml
+helm template cinetint ../helm/cinetint -f ../helm/cinetint/values-cours.yaml -f values-defi6.yaml
+
+# 2. installation (les Secrets sont générés par la charte : mots de passe aléatoires, clé Ed25519)
+helm upgrade --install cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi6.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --timeout 10m
+
+# 3. vérification
+helm list -n u-XXX
+helm get values cinetint -n u-XXX
+kubectl get all,configmap,secret -n u-XXX
+kubectl get configmap cinetint-config -n u-XXX -o yaml
+kubectl exec deploy/back -n u-XXX -- env | grep -E 'POSTGRES_HOST|POSTGRES_PORT|POSTGRES_DB|POSTGRES_USER'
+
+# 4. parcours complet par l'Ingress
+python3 ../outils/parcours.py https://django.MONGROUPE.csc8567.luxbulb.org \
+  --controleur "$(kubectl get secret cinetint-secrets -n u-XXX -o jsonpath='{.data.CONTROLEUR_MOT_DE_PASSE}' | base64 -d)"
+
+# mot de passe du back-office (identifiant : gerant)
+kubectl get secret cinetint-secrets -n u-XXX -o jsonpath='{.data.GERANT_MOT_DE_PASSE}' | base64 -d; echo

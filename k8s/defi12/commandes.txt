@@ -1,0 +1,60 @@
+# Défi 12 : PostgreSQL en réplication en flux (primaire + réplique), écrit à la main, sans charte tierce.
+# Fichiers appliqués : init-configmap.yaml, primaire.yaml, replique.yaml, services.yaml (Secret créé par commande).
+
+# 0. namespace propre : retirer une éventuelle installation Helm ou un PostgreSQL des défis précédents
+helm uninstall cinetint -n u-XXX
+kubectl delete pvc --all -n u-XXX
+
+# 1. le Secret (mots de passe aléatoires du compte principal et du compte de réplication)
+NAMESPACE=u-XXX ../appliquer.sh secrets-postgres
+
+# 2. déploiement
+NAMESPACE=u-XXX ../appliquer.sh defi12
+kubectl rollout status statefulset/postgres-primaire -n u-XXX
+kubectl rollout status statefulset/postgres-replique -n u-XXX
+kubectl get pods,pvc,svc -n u-XXX -o wide
+
+# 3. journaux de la copie initiale (initContainer) et du démarrage en réplique
+kubectl logs postgres-replique-0 -c copie-du-primaire -n u-XXX | tail -8
+kubectl logs postgres-replique-0 -c postgres -n u-XXX | grep -E 'standby|streaming|recovery'
+
+# 4. démonstration (le script suivant exécute les étapes 4a à 4g ci-dessous)
+#    N=u-XXX ../outils/demo-replication.sh
+# 4a. la réplique est en recovery, le primaire non
+kubectl exec postgres-replique-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -c "SELECT pg_is_in_recovery()"
+kubectl exec postgres-primaire-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -c "SELECT pg_is_in_recovery()"
+# 4b. écriture sur le primaire
+kubectl exec postgres-primaire-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint \
+  -c "CREATE TABLE essai_replication(id serial PRIMARY KEY, texte text, ecrit_le timestamptz DEFAULT now())" \
+  -c "INSERT INTO essai_replication(texte) VALUES ('ecrit sur le primaire'), ('deuxieme ligne')"
+# 4c. lecture sur la réplique
+kubectl exec postgres-replique-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -c "SELECT * FROM essai_replication"
+# 4d. écriture refusée sur la réplique : ERROR: cannot execute INSERT in a read-only transaction
+kubectl exec postgres-replique-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -c "INSERT INTO essai_replication(texte) VALUES ('tentative sur la replique')"
+# 4e. état de la réplication vu du primaire
+kubectl exec postgres-primaire-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -x -c "SELECT application_name, client_addr, state, sync_state, sent_lsn, replay_lsn FROM pg_stat_replication"
+kubectl exec postgres-primaire-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -c "SELECT slot_name, slot_type, active FROM pg_replication_slots"
+# 4f. vu de la réplique
+kubectl exec postgres-replique-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -x -c "SELECT status, sender_host, slot_name, written_lsn, flushed_lsn FROM pg_stat_wal_receiver"
+# 4g. via les Services : « postgres » = lecture/écriture (primaire), « postgres-lecture » = lecture seule
+kubectl run psql -n u-XXX --rm -it --restart=Never --image=postgres:17-alpine \
+  --env=PGPASSWORD="$(kubectl get secret postgres-secrets -n u-XXX -o jsonpath='{.data.POSTGRES_PASSWORD}' | base64 -d)" \
+  --command -- sh -c 'psql -h postgres -U cinetint -d cinetint -Atc "select pg_is_in_recovery()"; psql -h postgres-lecture -U cinetint -d cinetint -Atc "select pg_is_in_recovery()"'
+
+# 5. le primaire est supprimé : le StatefulSet le recrée avec le même volume, la réplique se reconnecte seule
+kubectl delete pod postgres-primaire-0 -n u-XXX
+kubectl wait --for=condition=Ready pod/postgres-primaire-0 -n u-XXX --timeout=120s
+kubectl exec postgres-primaire-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -Atc "select application_name, state from pg_stat_replication"
+
+# 6. (facultatif) brancher l'application sur ce primaire : la charte ne déploie pas PostgreSQL (mode externe)
+helm upgrade --install cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-app-defi12.yaml \
+  --set images.registre=ghcr.io/eldertek --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --set postgres.motDePasse="$(kubectl get secret postgres-secrets -n u-XXX -o jsonpath='{.data.POSTGRES_PASSWORD}' | base64 -d)"
+kubectl exec postgres-replique-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -c "SELECT count(*) AS billets FROM billets"
+
+# 7. (démonstration seulement, détruit la topologie) promotion manuelle de la réplique en nouveau primaire
+kubectl exec postgres-replique-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -Atc "SELECT pg_promote(wait => true)"
+kubectl exec postgres-replique-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -Atc "SELECT pg_is_in_recovery()"
+# pour reconstruire une réplique propre après la promotion :
+kubectl delete pod postgres-replique-0 -n u-XXX; kubectl delete pvc data-postgres-replique-0 -n u-XXX

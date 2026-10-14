@@ -1,0 +1,75 @@
+# Défi 16 : restauration de la base depuis une sauvegarde du volume cinetint-sauvegardes.
+# Ce manifeste n'est PAS appliqué par appliquer.sh (il détruit des données) : à lancer à la main, après avoir
+# arrêté le back, comme décrit dans commandes.txt.
+#
+#   kubectl scale deployment back --replicas=0 -n u-XXX
+#   kubectl apply -f restaurer-job.yaml -n u-XXX       (FICHIER vide = la sauvegarde la plus récente)
+#   kubectl logs -f job/cinetint-restauration -n u-XXX
+#   kubectl delete job cinetint-restauration -n u-XXX
+#   kubectl scale deployment back --replicas=3 -n u-XXX
+#
+# pg_restore --clean --if-exists supprime puis recrée chaque objet du dump, dans une seule transaction :
+# si la restauration échoue, la base reste dans son état d'avant.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cinetint-restauration
+  labels:
+    app.kubernetes.io/name: cinetint
+    app.kubernetes.io/component: sauvegarde       # étiquette autorisée par la NetworkPolicy de PostgreSQL
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cinetint
+        app.kubernetes.io/instance: cinetint
+        app.kubernetes.io/component: sauvegarde
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: restauration
+          image: postgres:17-alpine
+          env:
+            - {name: FICHIER, value: ""}          # ex. cinetint-planifiee-20261014-030000.dump
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef: {name: cinetint-config, key: POSTGRES_HOST}
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef: {name: cinetint-config, key: POSTGRES_PORT}
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef: {name: cinetint-config, key: POSTGRES_DB}
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef: {name: cinetint-config, key: POSTGRES_USER}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: POSTGRES_PASSWORD}
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              if [ -z "$FICHIER" ]; then
+                FICHIER="$(ls -1t /sauvegardes/cinetint-*.dump | head -1)"
+              else
+                FICHIER="/sauvegardes/$FICHIER"
+              fi
+              echo "[restauration] fichier : $FICHIER"
+              pg_restore --list "$FICHIER" > /dev/null
+              pg_restore -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+                --clean --if-exists --no-owner --single-transaction "$FICHIER"
+              echo "[restauration] terminée"
+              psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "select 'billets restaurés : ' || count(*) from billets"
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 200m, memory: 200Mi}
+          volumeMounts:
+            - {name: sauvegardes, mountPath: /sauvegardes, readOnly: true}
+      volumes:
+        - name: sauvegardes
+          persistentVolumeClaim:
+            claimName: cinetint-sauvegardes

@@ -1,0 +1,57 @@
+{{- if .Values.enabled }}
+# postgres : lecture/écriture, toujours le primaire. C'est le nom que l'application utilise.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "pgr.nom" (dict "ctx" . "n" "postgres") }}
+  labels:
+    {{- include "pgr.labels" (dict "ctx" . "role" "primaire") | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "pgr.selecteur" (dict "ctx" . "role" "primaire") | nindent 4 }}
+  ports:
+    - {name: postgres, port: 5432, targetPort: postgres}
+---
+# postgres-lecture : lecture seule, répartie entre les répliques.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "pgr.nom" (dict "ctx" . "n" "postgres-lecture") }}
+  labels:
+    {{- include "pgr.labels" (dict "ctx" . "role" "replique") | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "pgr.selecteur" (dict "ctx" . "role" "replique") | nindent 4 }}
+  ports:
+    - {name: postgres, port: 5432, targetPort: postgres}
+---
+# Services headless : un nom DNS stable par pod (postgres-primaire-0.postgres-primaire, ...).
+# Les répliques s'en servent pour joindre le primaire sans passer par une IP virtuelle.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "pgr.nom" (dict "ctx" . "n" "postgres-primaire") }}
+  labels:
+    {{- include "pgr.labels" (dict "ctx" . "role" "primaire") | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    {{- include "pgr.selecteur" (dict "ctx" . "role" "primaire") | nindent 4 }}
+  ports:
+    - {name: postgres, port: 5432, targetPort: postgres}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "pgr.nom" (dict "ctx" . "n" "postgres-replique") }}
+  labels:
+    {{- include "pgr.labels" (dict "ctx" . "role" "replique") | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    {{- include "pgr.selecteur" (dict "ctx" . "role" "replique") | nindent 4 }}
+  ports:
+    - {name: postgres, port: 5432, targetPort: postgres}
+{{- end }}

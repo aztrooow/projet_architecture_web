@@ -1,0 +1,31 @@
+# Défi 2 : un Deployment qui maintient 3 répliques du Pod csc8567.
+# Un Deployment décrit l'état voulu ("3 pods de cette image") ; son contrôleur crée un ReplicaSet,
+# qui crée les pods et les recrée s'il en disparaît un.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: csc8567
+  labels:
+    app: csc8567
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: csc8567            # les pods gérés par ce Deployment portent cette étiquette
+  template:
+    metadata:
+      labels:
+        app: csc8567
+    spec:
+      containers:
+        - name: csc8567
+          image: xhelozs/csc8567:v1
+          ports:
+            - containerPort: 5000     # Flask écoute sur 5000
+          resources:
+            requests:                 # ce que le scheduler réserve pour le pod
+              cpu: 100m               # 1/10 de CPU
+              memory: 100Mi           # 100 Mo
+            limits:                   # plafond appliqué par le noyau (cgroups)
+              cpu: 200m               # 1/5 de CPU : au-delà, le conteneur est ralenti (throttling)
+              memory: 200Mi           # au-delà, le conteneur est tué (OOMKilled)

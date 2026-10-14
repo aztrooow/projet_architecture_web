@@ -1,0 +1,52 @@
+# Défi 18 : durcissement. Utilisateur non root, capacités retirées, système de fichiers en lecture seule,
+# limites de débit sur l'Ingress, NetworkPolicy sur tous les composants, mots de passe en Secrets générés.
+# Valeurs cumulatives : ce fichier contient l'état complet voulu à la fin du défi.
+# Utilisation : helm upgrade --install cinetint ../helm/cinetint -n u-XXX -f ../helm/cinetint/values-cours.yaml -f values-defi18.yaml
+
+global:
+  securite: true
+
+postgres:
+  mode: statefulset
+  persistance:
+    enabled: true
+
+postgres-replication:
+  enabled: true
+
+images:
+  tags:
+    front: v2
+    back: v1
+    qrGenerator: v1
+    qrVerifier: v1
+
+sondes:
+  startup: {enabled: true}
+  readiness: {enabled: true}
+  liveness: {enabled: true}
+
+hpa:
+  enabled: true
+
+networkPolicies:
+  postgres:
+    enabled: true
+  applicatives:
+    enabled: true
+
+ingress:
+  limites:
+    enabled: true
+
+hooks:
+  configMap:
+    enabled: true
+  sauvegarde:
+    enabled: true
+  testFumee:
+    enabled: true
+
+sauvegardes:
+  enabled: true
+  planifiee: true

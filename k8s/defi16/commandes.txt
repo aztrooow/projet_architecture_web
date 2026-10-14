@@ -1,0 +1,36 @@
+# Défi 16 : sauvegarde planifiée (CronJob) vers un volume dédié, restauration testée.
+
+# 1. activer le CronJob (le volume des sauvegardes existe déjà depuis le défi 15)
+helm upgrade --install cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi16.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --timeout 10m
+
+# 2. le CronJob et le volume
+kubectl get cronjob,pvc -n u-XXX
+kubectl describe cronjob cinetint-sauvegarde -n u-XXX
+
+# 3. ne pas attendre 03:00 : lancer une sauvegarde tout de suite à partir du CronJob
+kubectl create job sauvegarde-manuelle --from=cronjob/cinetint-sauvegarde -n u-XXX
+kubectl wait --for=condition=complete job/sauvegarde-manuelle -n u-XXX --timeout=180s
+kubectl logs job/sauvegarde-manuelle -n u-XXX
+
+# 4. état de la base avant le « sinistre » (le Pod postgres-primaire-0 existe quand la réplication est active, postgres-0 sinon)
+kubectl exec postgres-primaire-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -Atc "select count(*) from billets"
+
+# 5. le sinistre : on vide les billets
+kubectl exec postgres-primaire-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -Atc "TRUNCATE billets, controles CASCADE" -c "select count(*) from billets"
+
+# 6. restauration : arrêter le back, lancer le Job de restauration, remonter le back
+kubectl scale deployment back --replicas=0 -n u-XXX
+kubectl apply -f restaurer-job.yaml -n u-XXX
+kubectl wait --for=condition=complete job/cinetint-restauration -n u-XXX --timeout=180s
+kubectl logs job/cinetint-restauration -n u-XXX
+kubectl delete job cinetint-restauration sauvegarde-manuelle -n u-XXX
+kubectl scale deployment back --replicas=3 -n u-XXX
+kubectl rollout status deployment/back -n u-XXX
+
+# 7. contrôle : les billets sont revenus (y compris sur la réplique)
+kubectl exec postgres-primaire-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -Atc "select count(*) from billets"
+kubectl exec postgres-replique-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -Atc "select count(*) from billets"

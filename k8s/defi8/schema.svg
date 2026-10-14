@@ -1,0 +1,272 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1230" width="1600" height="1230" font-family="Verdana, 'DejaVu Sans', 'Segoe UI', Arial, sans-serif">
+<title>Défi 8 : mise à jour progressive (Rolling Update) du Deployment front</title>
+<defs>
+<marker id="m-bleu" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6f8fb0"/></marker>
+<marker id="m-or" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0965e"/></marker>
+<marker id="m-rouge" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c4584c"/></marker>
+</defs>
+<rect width="1600" height="1230" rx="16" fill="#0c0b09"/>
+<text x="50" y="46"><tspan fill="#c0965e" font-size="24" font-weight="600" letter-spacing="3">CINETINT</tspan><tspan dx="16" fill="#a39c90" font-size="15">défi 8 : Rolling Update du front en cinq instantanés, sans interruption</tspan></text>
+<rect x="30" y="58" width="190" height="72" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="44" y="82" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Navigateur</tspan></text>
+<path d="M30,92 L220,92" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="44" y="113" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">requêtes en continu</tspan></text>
+<path d="M220,94 L252,94" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<rect x="252" y="58" width="230" height="72" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="266" y="82" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Ingress nginx</tspan></text>
+<path d="M252,92 L482,92" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="266" y="113" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">inchangé, /  -&gt;  front</tspan></text>
+<path d="M482,94 L514,94" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<rect x="514" y="58" width="440" height="72" rx="9" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="524" y="77" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">Service </tspan><tspan fill="#f3ebdd" font-size="13" font-weight="700">front</tspan></text>
+<text x="524" y="94" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="400">10.43.88.12 :8080  (inchangé)</tspan></text>
+<rect x="984" y="58" width="586" height="72" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="998" y="82" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Deployment front : stratégie RollingUpdate</tspan></text>
+<path d="M984,92 L1570,92" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="998" y="113" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">maxSurge 1, maxUnavailable 0, minReadySeconds 5</tspan></text>
+<path d="M30,148 L1570,148" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<rect x="642.8" y="138" width="314.4" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="800" y="152.2" text-anchor="middle"><tspan fill="#d8d0c2" font-size="12" font-weight="400">temps : le Service et l'Ingress ne bougent jamais</tspan></text>
+<rect x="30" y="158" width="300" height="54" rx="10" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="44" y="180" text-anchor="start"><tspan fill="#c0965e" font-size="17" font-weight="700">T0</tspan><tspan fill="#f3ebdd" font-size="14" font-weight="700">  avant</tspan></text>
+<text x="44" y="201" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">3 pods v1 Ready</tspan></text>
+<rect x="30" y="220" width="300" height="62" rx="8" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="42" y="239" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="700">endpoints du Service front</tspan></text>
+<text x="42" y="261" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="400">10.42.1.14, 10.42.1.15, 10.42.2.12</tspan></text>
+<rect x="30" y="292" width="300" height="222" rx="10" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="64" y="314" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ReplicaSet A : v1</tspan></text>
+<text x="318" y="314" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">replicas 3</tspan></text>
+<rect x="68" y="330" width="254" height="54" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="78" y="347" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-x2k4p</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="78" y="363" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.14</tspan></text>
+<text x="78" y="379" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<rect x="68" y="390" width="254" height="54" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="78" y="407" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-m9q2z</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="78" y="423" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.15</tspan></text>
+<text x="78" y="439" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<rect x="68" y="450" width="254" height="54" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="78" y="467" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-t5w8c</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="78" y="483" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.12</tspan></text>
+<text x="78" y="499" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<rect x="30" y="524" width="300" height="222" rx="10" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="64" y="546" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ReplicaSet B : v2</tspan></text>
+<text x="318" y="546" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">replicas 0</tspan></text>
+<text x="180" y="644" text-anchor="middle"><tspan fill="#a39c90" font-size="12" font-weight="400">aucun pod</tspan></text>
+<path d="M44,282 L44,477" fill="none" stroke="#6f8fb0" stroke-width="2"/>
+<path d="M44,357 L68,357" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M44,417 L68,417" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M44,477 L68,477" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<rect x="340" y="158" width="300" height="54" rx="10" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="354" y="180" text-anchor="start"><tspan fill="#c0965e" font-size="17" font-weight="700">T1</tspan><tspan fill="#f3ebdd" font-size="14" font-weight="700">  un pod v2 démarre</tspan></text>
+<text x="354" y="201" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">maxSurge 1, pas encore Ready</tspan></text>
+<rect x="340" y="220" width="300" height="62" rx="8" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="352" y="239" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="700">endpoints du Service front</tspan></text>
+<text x="352" y="261" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="400">10.42.1.14, 10.42.1.15, 10.42.2.12</tspan></text>
+<rect x="340" y="292" width="300" height="222" rx="10" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="374" y="314" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ReplicaSet A : v1</tspan></text>
+<text x="628" y="314" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">replicas 3</tspan></text>
+<rect x="378" y="330" width="254" height="54" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="388" y="347" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-x2k4p</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="388" y="363" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.14</tspan></text>
+<text x="388" y="379" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<rect x="378" y="390" width="254" height="54" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="388" y="407" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-m9q2z</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="388" y="423" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.15</tspan></text>
+<text x="388" y="439" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<rect x="378" y="450" width="254" height="54" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="388" y="467" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-t5w8c</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="388" y="483" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.12</tspan></text>
+<text x="388" y="499" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<rect x="340" y="524" width="300" height="222" rx="10" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="374" y="546" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ReplicaSet B : v2</tspan></text>
+<text x="628" y="546" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">replicas 1</tspan></text>
+<rect x="378" y="562" width="254" height="54" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3" stroke-dasharray="5 4"/>
+<text x="388" y="579" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-7b2c4-h8v3n</tspan><tspan fill="#9db6cf" font-size="12" font-weight="700">  v2</tspan></text>
+<text x="388" y="595" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.17</tspan></text>
+<text x="388" y="611" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">pas Ready : sonde en cours</tspan></text>
+<path d="M354,282 L354,589" fill="none" stroke="#6f8fb0" stroke-width="2"/>
+<path d="M354,357 L378,357" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M354,417 L378,417" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M354,477 L378,477" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M354,589 L378,589" fill="none" stroke="#c4584c" stroke-width="2" stroke-dasharray="3 3"/>
+<circle cx="366" cy="589" r="9" fill="#0c0b09" stroke="#c4584c" stroke-width="2"/>
+<path d="M364,587 L368,591 M364,591 L368,587" stroke="#c4584c" stroke-width="3" fill="none"/>
+<rect x="650" y="158" width="300" height="54" rx="10" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="664" y="180" text-anchor="start"><tspan fill="#c0965e" font-size="17" font-weight="700">T2</tspan><tspan fill="#f3ebdd" font-size="14" font-weight="700">  v2 Ready</tspan></text>
+<text x="664" y="201" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">un pod v1 s'arrête (preStop)</tspan></text>
+<rect x="650" y="220" width="300" height="62" rx="8" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="662" y="239" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="700">endpoints du Service front</tspan></text>
+<text x="662" y="261" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="400">10.42.1.14, 10.42.1.15, 10.42.1.17</tspan></text>
+<rect x="650" y="292" width="300" height="222" rx="10" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="684" y="314" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ReplicaSet A : v1</tspan></text>
+<text x="938" y="314" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">replicas 2</tspan></text>
+<rect x="688" y="330" width="254" height="54" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="698" y="347" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-x2k4p</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="698" y="363" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.14</tspan></text>
+<text x="698" y="379" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<rect x="688" y="390" width="254" height="54" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="698" y="407" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-m9q2z</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="698" y="423" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.15</tspan></text>
+<text x="698" y="439" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<rect x="688" y="450" width="254" height="54" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3" stroke-dasharray="5 4"/>
+<text x="698" y="467" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-t5w8c</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="698" y="483" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.12</tspan></text>
+<text x="698" y="499" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">arrêt : retiré, preStop 5 s</tspan></text>
+<rect x="650" y="524" width="300" height="222" rx="10" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="684" y="546" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ReplicaSet B : v2</tspan></text>
+<text x="938" y="546" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">replicas 2</tspan></text>
+<rect x="688" y="562" width="254" height="54" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="698" y="579" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-7b2c4-h8v3n</tspan><tspan fill="#9db6cf" font-size="12" font-weight="700">  v2</tspan></text>
+<text x="698" y="595" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.17</tspan></text>
+<text x="698" y="611" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<rect x="688" y="622" width="254" height="54" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3" stroke-dasharray="5 4"/>
+<text x="698" y="639" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-7b2c4-q6d9r</tspan><tspan fill="#9db6cf" font-size="12" font-weight="700">  v2</tspan></text>
+<text x="698" y="655" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.16</tspan></text>
+<text x="698" y="671" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">pas Ready : sonde en cours</tspan></text>
+<path d="M664,282 L664,649" fill="none" stroke="#6f8fb0" stroke-width="2"/>
+<path d="M664,357 L688,357" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M664,417 L688,417" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M664,477 L688,477" fill="none" stroke="#c4584c" stroke-width="2" stroke-dasharray="3 3"/>
+<circle cx="676" cy="477" r="9" fill="#0c0b09" stroke="#c4584c" stroke-width="2"/>
+<path d="M674,475 L678,479 M674,479 L678,475" stroke="#c4584c" stroke-width="3" fill="none"/>
+<path d="M664,589 L688,589" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M664,649 L688,649" fill="none" stroke="#c4584c" stroke-width="2" stroke-dasharray="3 3"/>
+<circle cx="676" cy="649" r="9" fill="#0c0b09" stroke="#c4584c" stroke-width="2"/>
+<path d="M674,647 L678,651 M674,651 L678,647" stroke="#c4584c" stroke-width="3" fill="none"/>
+<rect x="960" y="158" width="300" height="54" rx="10" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="974" y="180" text-anchor="start"><tspan fill="#c0965e" font-size="17" font-weight="700">T3</tspan><tspan fill="#f3ebdd" font-size="14" font-weight="700">  même cycle</tspan></text>
+<text x="974" y="201" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">2 pods v2 Ready, 1 pod v1</tspan></text>
+<rect x="960" y="220" width="300" height="62" rx="8" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="972" y="239" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="700">endpoints du Service front</tspan></text>
+<text x="972" y="261" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="400">10.42.1.14, 10.42.1.17, 10.42.2.16</tspan></text>
+<rect x="960" y="292" width="300" height="222" rx="10" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="994" y="314" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ReplicaSet A : v1</tspan></text>
+<text x="1248" y="314" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">replicas 1</tspan></text>
+<rect x="998" y="330" width="254" height="54" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="1008" y="347" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-x2k4p</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="1008" y="363" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.14</tspan></text>
+<text x="1008" y="379" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<rect x="998" y="390" width="254" height="54" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3" stroke-dasharray="5 4"/>
+<text x="1008" y="407" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-m9q2z</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="1008" y="423" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.15</tspan></text>
+<text x="1008" y="439" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">arrêt : retiré, preStop 5 s</tspan></text>
+<rect x="998" y="450" width="254" height="54" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3" stroke-dasharray="3 3" opacity="0.45"/>
+<text x="1008" y="467" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-t5w8c</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="1008" y="483" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.12</tspan></text>
+<text x="1008" y="499" text-anchor="start"><tspan fill="#8a8377" font-size="12" font-weight="400">supprimé</tspan></text>
+<rect x="960" y="524" width="300" height="222" rx="10" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="994" y="546" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ReplicaSet B : v2</tspan></text>
+<text x="1248" y="546" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">replicas 3</tspan></text>
+<rect x="998" y="562" width="254" height="54" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="1008" y="579" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-7b2c4-h8v3n</tspan><tspan fill="#9db6cf" font-size="12" font-weight="700">  v2</tspan></text>
+<text x="1008" y="595" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.17</tspan></text>
+<text x="1008" y="611" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<rect x="998" y="622" width="254" height="54" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="1008" y="639" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-7b2c4-q6d9r</tspan><tspan fill="#9db6cf" font-size="12" font-weight="700">  v2</tspan></text>
+<text x="1008" y="655" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.16</tspan></text>
+<text x="1008" y="671" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<rect x="998" y="682" width="254" height="54" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3" stroke-dasharray="5 4"/>
+<text x="1008" y="699" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-7b2c4-w3k7s</tspan><tspan fill="#9db6cf" font-size="12" font-weight="700">  v2</tspan></text>
+<text x="1008" y="715" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.18</tspan></text>
+<text x="1008" y="731" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">pas Ready : sonde en cours</tspan></text>
+<path d="M974,282 L974,709" fill="none" stroke="#6f8fb0" stroke-width="2"/>
+<path d="M974,357 L998,357" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M974,417 L998,417" fill="none" stroke="#c4584c" stroke-width="2" stroke-dasharray="3 3"/>
+<circle cx="986" cy="417" r="9" fill="#0c0b09" stroke="#c4584c" stroke-width="2"/>
+<path d="M984,415 L988,419 M984,419 L988,415" stroke="#c4584c" stroke-width="3" fill="none"/>
+<path d="M974,589 L998,589" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M974,649 L998,649" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M974,709 L998,709" fill="none" stroke="#c4584c" stroke-width="2" stroke-dasharray="3 3"/>
+<circle cx="986" cy="709" r="9" fill="#0c0b09" stroke="#c4584c" stroke-width="2"/>
+<path d="M984,707 L988,711 M984,711 L988,707" stroke="#c4584c" stroke-width="3" fill="none"/>
+<rect x="1270" y="158" width="300" height="54" rx="10" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="1284" y="180" text-anchor="start"><tspan fill="#c0965e" font-size="17" font-weight="700">T4</tspan><tspan fill="#f3ebdd" font-size="14" font-weight="700">  fin</tspan></text>
+<text x="1284" y="201" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">3 pods v2, ReplicaSet A à 0</tspan></text>
+<rect x="1270" y="220" width="300" height="62" rx="8" fill="#12161a" stroke="#6f8fb0" stroke-width="1.5"/>
+<text x="1282" y="239" text-anchor="start"><tspan fill="#9db6cf" font-size="12" font-weight="700">endpoints du Service front</tspan></text>
+<text x="1282" y="261" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="400">10.42.1.17, 10.42.2.16, 10.42.1.18</tspan></text>
+<rect x="1270" y="292" width="300" height="222" rx="10" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="1304" y="314" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ReplicaSet A : v1</tspan></text>
+<text x="1558" y="314" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">replicas 0</tspan></text>
+<rect x="1308" y="330" width="254" height="54" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3" stroke-dasharray="3 3" opacity="0.45"/>
+<text x="1318" y="347" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-x2k4p</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="1318" y="363" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.14</tspan></text>
+<text x="1318" y="379" text-anchor="start"><tspan fill="#8a8377" font-size="12" font-weight="400">supprimé</tspan></text>
+<rect x="1308" y="390" width="254" height="54" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3" stroke-dasharray="3 3" opacity="0.45"/>
+<text x="1318" y="407" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-m9q2z</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="1318" y="423" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.15</tspan></text>
+<text x="1318" y="439" text-anchor="start"><tspan fill="#8a8377" font-size="12" font-weight="400">supprimé</tspan></text>
+<rect x="1308" y="450" width="254" height="54" rx="8" fill="#16140f" stroke="#3a342a" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.45"/>
+<text x="1318" y="467" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-t5w8c</tspan><tspan fill="#d9b886" font-size="12" font-weight="700">  v1</tspan></text>
+<text x="1318" y="483" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.12</tspan></text>
+<text x="1318" y="499" text-anchor="start"><tspan fill="#8a8377" font-size="12" font-weight="400">supprimé</tspan></text>
+<rect x="1270" y="524" width="300" height="222" rx="10" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="1304" y="546" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ReplicaSet B : v2</tspan></text>
+<text x="1558" y="546" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">replicas 3</tspan></text>
+<rect x="1308" y="562" width="254" height="54" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="1318" y="579" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-7b2c4-h8v3n</tspan><tspan fill="#9db6cf" font-size="12" font-weight="700">  v2</tspan></text>
+<text x="1318" y="595" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.17</tspan></text>
+<text x="1318" y="611" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<rect x="1308" y="622" width="254" height="54" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="1318" y="639" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-7b2c4-q6d9r</tspan><tspan fill="#9db6cf" font-size="12" font-weight="700">  v2</tspan></text>
+<text x="1318" y="655" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.16</tspan></text>
+<text x="1318" y="671" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<rect x="1308" y="682" width="254" height="54" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="1318" y="699" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-7b2c4-w3k7s</tspan><tspan fill="#9db6cf" font-size="12" font-weight="700">  v2</tspan></text>
+<text x="1318" y="715" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.18</tspan></text>
+<text x="1318" y="731" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">Ready : reçoit le trafic</tspan></text>
+<path d="M1284,282 L1284,709" fill="none" stroke="#6f8fb0" stroke-width="2"/>
+<path d="M1284,589 L1308,589" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M1284,649 L1308,649" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<path d="M1284,709 L1308,709" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<rect x="30" y="764" width="1540" height="150" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="46" y="788" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Pendant la mise à jour</tspan><tspan fill="#a39c90" font-size="12" font-weight="400">   mesures aux cinq instants</tspan></text>
+<path d="M150,896 L1500,896" fill="none" stroke="#2a2620" stroke-width="1"/>
+<text x="136" y="900" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">0</tspan></text>
+<path d="M150,836 L1500,836" fill="none" stroke="#2a2620" stroke-width="1"/>
+<text x="136" y="840" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">3</tspan></text>
+<path d="M150,816 L1500,816" fill="none" stroke="#2a2620" stroke-width="1"/>
+<text x="136" y="820" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">4</tspan></text>
+<path d="M180,836 L490,816 L800,816 L1110,816 L1420,836" fill="none" stroke="#8a8377" stroke-width="2"/>
+<path d="M180,836 L490,836 L800,836 L1110,836 L1420,836" fill="none" stroke="#c0965e" stroke-width="3"/>
+<path d="M180,896 L490,896 L800,896 L1110,896 L1420,896" fill="none" stroke="#6fae78" stroke-width="3"/>
+<rect x="175" y="831" width="10" height="10" rx="5" fill="#c0965e"/>
+<rect x="175" y="891" width="10" height="10" rx="5" fill="#6fae78"/>
+<rect x="485" y="811" width="10" height="10" rx="5" fill="#8a8377"/>
+<rect x="485" y="891" width="10" height="10" rx="5" fill="#6fae78"/>
+<rect x="795" y="811" width="10" height="10" rx="5" fill="#8a8377"/>
+<rect x="795" y="891" width="10" height="10" rx="5" fill="#6fae78"/>
+<rect x="1105" y="811" width="10" height="10" rx="5" fill="#8a8377"/>
+<rect x="1105" y="891" width="10" height="10" rx="5" fill="#6fae78"/>
+<rect x="1415" y="831" width="10" height="10" rx="5" fill="#c0965e"/>
+<rect x="1415" y="891" width="10" height="10" rx="5" fill="#6fae78"/>
+<text x="1560" y="888" text-anchor="end"><tspan fill="#6fae78" font-size="12" font-weight="700">requêtes en erreur : 0</tspan></text>
+<text x="1560" y="860" text-anchor="end"><tspan fill="#d9b886" font-size="12" font-weight="700">pods Ready : toujours 3 (maxUnavailable 0)</tspan></text>
+<text x="818" y="808" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">pods au total : 4 pendant le remplacement (maxSurge 1)</tspan></text>
+<rect x="30" y="930" width="800" height="130" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="44" y="954" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Lancer et suivre la mise à jour</tspan></text>
+<path d="M30,964 L830,964" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="44" y="985" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">helm upgrade --install cinetint ./helm/cinetint --set images.tags.front=v2</tspan></text>
+<text x="44" y="1004" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">kubectl rollout status deployment/front</tspan></text>
+<text x="44" y="1023" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">kubectl rollout history deployment/front</tspan></text>
+<text x="44" y="1042" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">kubectl get replicaset -l app.kubernetes.io/component=front</tspan></text>
+<rect x="860" y="930" width="710" height="130" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="874" y="954" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Revenir en arrière</tspan></text>
+<path d="M860,964 L1570,964" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="874" y="985" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">kubectl rollout undo deployment/front</tspan></text>
+<text x="874" y="1004" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">helm rollback cinetint</tspan></text>
+<text x="874" y="1023" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">le ReplicaSet A reste à 0 pod : le retour réactive v1</tspan></text>
+<text x="874" y="1042" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">sans reconstruire l'image ni recréer l'objet</tspan></text>
+<rect x="30" y="1078" width="1540" height="70" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="44" y="1102" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Pourquoi aucune requête n'est perdue</tspan></text>
+<path d="M30,1112 L1570,1112" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="44" y="1133" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">readinessProbe /sante : un pod n'entre dans les endpoints qu'une fois Ready ; preStop sleep 5 : il en sort avant de recevoir son signal d'arrêt</tspan></text>
+<path d="M30,1178 L64,1178" fill="none" stroke="#6f8fb0" stroke-width="2" marker-end="url(#m-bleu)"/>
+<text x="74" y="1182" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">Service -&gt; pod (endpoints)</tspan></text>
+<path d="M272.76,1178 L306.76,1178" fill="none" stroke="#c4584c" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-rouge)"/>
+<text x="316.76" y="1182" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">aucun trafic (pod pas Ready ou en arrêt)</tspan></text>
+<rect x="597.96" y="1170" width="34" height="16" rx="4" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="641.96" y="1182" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">pod Ready</tspan></text>
+<rect x="740.16" y="1170" width="34" height="16" rx="4" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="784.16" y="1182" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">pod dont l'état change à cet instant</tspan></text>
+</svg>

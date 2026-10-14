@@ -1,0 +1,23 @@
+# Défi 7 : PostgreSQL en StatefulSet, volume persistant de 0.1 Go, service headless.
+
+# 0. passage du défi 6 au défi 7 : le Service postgres change de nature (ClusterIP puis headless : champ immuable) et la base
+#    devient un StatefulSet. On repart d'une installation propre (la base du défi 6 n'avait rien à conserver).
+helm uninstall cinetint -n u-XXX
+
+# 1. installation avec les valeurs du défi 7
+helm upgrade --install cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi7.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --timeout 10m
+
+# 2. vérification : un pod postgres-0, un PVC lié à un PV, un service headless
+kubectl get statefulset,pods,pvc,svc -n u-XXX -o wide
+kubectl get svc postgres -n u-XXX          # CLUSTER-IP : None
+kubectl run dns -n u-XXX --rm -it --restart=Never --image=busybox:1.37 -- nslookup postgres.u-XXX.svc.cluster.local
+
+# 3. preuve de la persistance : écrire, supprimer le pod, relire
+kubectl exec postgres-0 -n u-XXX -- psql -U cinetint -d cinetint -c "CREATE TABLE marqueur(id int, note text); INSERT INTO marqueur VALUES (1, 'ecrit avant la suppression du pod')"
+kubectl delete pod postgres-0 -n u-XXX
+kubectl wait --for=condition=Ready pod/postgres-0 -n u-XXX --timeout=120s
+kubectl exec postgres-0 -n u-XXX -- psql -U cinetint -d cinetint -c 'SELECT * FROM marqueur' -c 'SELECT count(*) FROM films'

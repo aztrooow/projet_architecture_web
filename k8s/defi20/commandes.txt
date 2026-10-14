@@ -1,0 +1,34 @@
+# Défi 20 : migration de base de données sans interruption (expand / contract avec Alembic).
+
+# 0. état de départ : charte au niveau du défi 18, back en v2 (image avec Alembic)
+helm upgrade --install cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi20.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --timeout 10m
+kubectl exec postgres-primaire-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -Atc "select version_num from alembic_version"    # 0001
+
+# 1. construire et envoyer l'image back v3 : la v2 plus la migration 0002 (ajout de la colonne commandes.canal_detail)
+REGISTRE=ghcr.io/eldertek ./construire-v3.sh
+docker push ghcr.io/eldertek/cinetint-back:v3
+
+# 2. charge d'écriture continue et lecture continue, dans deux terminaux séparés, pendant toute la mise à jour
+python3 ecritures.py https://django.MONGROUPE.csc8567.luxbulb.org --duree 100
+while true; do curl -s -o /dev/null -w '%{http_code} ' https://django.MONGROUPE.csc8567.luxbulb.org/api/programme; sleep 0.2; done
+
+# 3. la mise à jour : rolling update du back vers la v3 (la migration est appliquée par le premier Pod v3)
+helm upgrade cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi20.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --set images.tags.back=v3 --timeout 10m
+kubectl rollout status deployment/back -n u-XXX
+kubectl logs deploy/back -n u-XXX | grep -E 'migrations|Running upgrade'
+
+# 4. contrôles : révision, colonne, données intactes
+kubectl exec postgres-primaire-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -Atc "select version_num from alembic_version"   # 0002
+kubectl exec postgres-primaire-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -c "select column_name, data_type, column_default, is_nullable from information_schema.columns where table_name='commandes' and column_name='canal_detail'"
+kubectl exec postgres-primaire-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -c "select canal_detail, count(*) from commandes group by 1" -c "select count(*) as billets from billets"
+
+# tout l'essai (3 phases : v1 vers v2, v2 vers v3, tentative de retour arrière) est scripté :
+N=u-XXX ../outils/demo-migration.sh

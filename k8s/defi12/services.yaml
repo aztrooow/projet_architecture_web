@@ -1,0 +1,50 @@
+# Quatre Services pour deux StatefulSets.
+#
+# postgres          ClusterIP, écriture ET lecture : désigne toujours le primaire. C'est le nom que l'application utilise.
+# postgres-lecture  ClusterIP, lecture seule : répartit les connexions entre les répliques.
+# postgres-primaire headless (clusterIP: None) : donne un nom DNS stable au pod du primaire
+#                   (postgres-primaire-0.postgres-primaire.<ns>.svc.cluster.local). Les répliques s'en servent.
+# postgres-replique headless : identité de chaque réplique (postgres-replique-0, ...).
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels: {app: postgres, role: primaire}
+spec:
+  type: ClusterIP
+  selector: {app: postgres, role: primaire}
+  ports:
+    - {name: postgres, port: 5432, targetPort: postgres}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-lecture
+  labels: {app: postgres, role: replique}
+spec:
+  type: ClusterIP
+  selector: {app: postgres, role: replique}
+  ports:
+    - {name: postgres, port: 5432, targetPort: postgres}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-primaire
+  labels: {app: postgres, role: primaire}
+spec:
+  clusterIP: None
+  selector: {app: postgres, role: primaire}
+  ports:
+    - {name: postgres, port: 5432, targetPort: postgres}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-replique
+  labels: {app: postgres, role: replique}
+spec:
+  clusterIP: None
+  selector: {app: postgres, role: replique}
+  ports:
+    - {name: postgres, port: 5432, targetPort: postgres}

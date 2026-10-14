@@ -1,0 +1,129 @@
+{{- /*
+NetworkPolicy : par défaut, tous les pods du cluster peuvent se parler, y compris ceux d'un
+autre namespace. Un pod sélectionné par une NetworkPolicy "Ingress" n'accepte plus que le trafic
+listé. Le plugin réseau (CNI) applique les règles : Canal/Calico sur RKE2.
+On ne restreint que les connexions entrantes : les sorties (DNS, appels HTTP) restent libres.
+*/ -}}
+{{- $ing := .Values.networkPolicies.namespaceIngress }}
+{{- if .Values.networkPolicies.postgres.enabled }}
+# Défi 11 : seuls les pods autorisés joignent PostgreSQL (port 5432), et les pods PostgreSQL entre eux
+# (réplication). Dans le code, seul le back ouvre une connexion SQL : le front passe par l'API,
+# le qr-generator et le qr-verifier n'ont aucun accès à la base.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "postgres-acces") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "networkpolicy") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: postgres
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/instance
+                operator: In
+                values: [{{ .Release.Name | quote }}]
+              - key: app.kubernetes.io/component
+                operator: In
+                values:
+                  {{- range .Values.networkPolicies.postgres.composantsAutorises }}
+                  - {{ . | quote }}
+                  {{- end }}
+                  - postgres
+      ports:
+        - {protocol: TCP, port: 5432}
+{{- end }}
+{{- if .Values.networkPolicies.applicatives.enabled }}
+{{- $inst := .Release.Name }}
+---
+# Redis : seul le back y accède (verrous, compteurs, pub/sub).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "redis-acces") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "networkpolicy") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/instance: {{ $inst }}, app.kubernetes.io/component: redis}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/instance: {{ $inst }}, app.kubernetes.io/component: back}
+      ports:
+        - {protocol: TCP, port: 6379}
+---
+# back : appelé par le front (rendu serveur), le qr-verifier (passage atomique) et, depuis
+# l'extérieur, par le contrôleur Ingress (/api).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "back-acces") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "networkpolicy") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/instance: {{ $inst }}, app.kubernetes.io/component: back}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - {key: app.kubernetes.io/instance, operator: In, values: [{{ $inst | quote }}]}
+              - {key: app.kubernetes.io/component, operator: In, values: [front, qr-verifier, test]}
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: {{ $ing }}}
+      ports:
+        - {protocol: TCP, port: {{ .Values.back.port }}}
+---
+# qr-generator : appelé par le back (signature, PDF), le qr-verifier (clé publique) et le navigateur via l'Ingress (/qr).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "qr-generator-acces") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "networkpolicy") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/instance: {{ $inst }}, app.kubernetes.io/component: qr-generator}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - {key: app.kubernetes.io/instance, operator: In, values: [{{ $inst | quote }}]}
+              - {key: app.kubernetes.io/component, operator: In, values: [back, qr-verifier, test]}
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: {{ $ing }}}
+      ports:
+        - {protocol: TCP, port: {{ .Values.qrGenerator.port }}}
+---
+# qr-verifier et front : joignables uniquement par le contrôleur Ingress (et le test de fumée).
+{{- range $c, $port := dict "qr-verifier" .Values.qrVerifier.port "front" .Values.front.port }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" $ "n" (printf "%s-acces" $c)) }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" $ "c" "networkpolicy") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/instance: {{ $inst }}, app.kubernetes.io/component: {{ $c }}}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: {{ $ing }}}
+        - podSelector:
+            matchLabels: {app.kubernetes.io/instance: {{ $inst }}, app.kubernetes.io/component: test}
+      ports:
+        - {protocol: TCP, port: {{ $port }}}
+{{- end }}
+{{- end }}

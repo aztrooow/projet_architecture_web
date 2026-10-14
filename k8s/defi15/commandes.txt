@@ -1,0 +1,34 @@
+# Défi 15 : hooks Helm (carnet de déploiement en ConfigMap avant/après, sauvegarde pg_dump avant/après chaque mise à jour).
+
+# 1. première application des valeurs du défi 15 (le volume de sauvegarde est créé ; hooks de ConfigMap exécutés)
+helm upgrade --install cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi15.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --timeout 10m
+
+# 2. le carnet écrit par les hooks
+kubectl get configmap cinetint-deploiement -n u-XXX -o jsonpath='{.data}'; echo
+kubectl get configmap cinetint-deploiement -n u-XXX -o yaml
+
+# 3. une mise à jour : les hooks tournent AVANT (sauvegarde) et APRÈS (test de fumée, carnet, sauvegarde)
+#    dans un second terminal : les Jobs de hooks apparaissent puis disparaissent (hook-succeeded)
+kubectl get jobs,pods -n u-XXX -w
+helm upgrade cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi15.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --set back.programmeSource=demo --timeout 10m
+kubectl get configmap cinetint-deploiement -n u-XXX -o jsonpath='{.data}'; echo
+
+# 4. les sauvegardes sur le volume dédié (Pod d'essai qui monte le volume)
+kubectl run ls-sauvegardes -n u-XXX --rm -it --restart=Never --image=postgres:17-alpine \
+  --labels=app.kubernetes.io/instance=cinetint,app.kubernetes.io/component=sauvegarde \
+  --overrides='{"spec":{"containers":[{"name":"ls","image":"postgres:17-alpine","command":["ls","-l","/sauvegardes"],"volumeMounts":[{"name":"s","mountPath":"/sauvegardes"}]}],"volumes":[{"name":"s","persistentVolumeClaim":{"claimName":"cinetint-sauvegardes"}}]}}'
+
+# 5. le test à la demande
+helm test cinetint -n u-XXX
+
+# 6. désinstallation : le hook post-delete supprime le carnet ; le volume des sauvegardes est conservé
+helm uninstall cinetint -n u-XXX
+kubectl get configmap,pvc -n u-XXX

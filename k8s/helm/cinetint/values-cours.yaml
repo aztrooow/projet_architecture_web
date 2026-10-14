@@ -1,0 +1,18 @@
+# Valeurs pour le cluster du cours (RKE2, namespace u-XXX, https://csc8567.luxbulb.org).
+#
+#   helm upgrade --install cinetint k8s/helm/cinetint -n u-XXX -f k8s/helm/cinetint/values-cours.yaml \
+#     --set images.registre=ghcr.io/eldertek --set ingress.host=django.MON_GROUPE.csc8567.luxbulb.org
+#
+# Le namespace est celui du compte (option -n) : la charte ne crée aucune ressource hors du namespace
+# (ni namespace, ni ClusterRole, ni CRD, ni StorageClass), conformément aux droits du compte.
+images:
+  registre: ghcr.io/eldertek       # a remplacer par le registre du groupe (ghcr.io/eldertek)
+  pullPolicy: IfNotPresent
+
+ingress:
+  className: nginx                            # IngressClass de rke2-ingress-nginx-controller
+  host: django.GROUPE.csc8567.luxbulb.org     # a remplacer par le nom de groupe donne par les enseignants
+
+networkPolicies:
+  # le contrôleur Ingress de RKE2 tourne dans kube-system (derrière le LoadBalancer MetalLB 157.159.11.201)
+  namespaceIngress: kube-system

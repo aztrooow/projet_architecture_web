@@ -1,0 +1,41 @@
+# Redis : le back en a besoin dès son démarrage (verrous de sièges, compteurs, temps réel ; sonde /api/sante).
+# Il n'est pas demandé au Défi 3 mais le back ne répond pas sans lui. Un Pod, un Service ClusterIP.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:8-alpine
+          args: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "100mb", "--maxmemory-policy", "noeviction"]
+          ports:
+            - containerPort: 6379
+          resources:
+            requests: {cpu: 100m, memory: 100Mi}
+            limits: {cpu: 200m, memory: 200Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379

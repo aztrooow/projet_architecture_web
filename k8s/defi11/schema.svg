@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1100" width="1600" height="1100" font-family="Verdana, 'DejaVu Sans', 'Segoe UI', Arial, sans-serif">
+<title>Défi 11 : NetworkPolicy qui protège la base de données</title>
+<defs>
+<marker id="m-gris" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8a8377"/></marker>
+<marker id="m-or" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0965e"/></marker>
+<marker id="m-rouge" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c4584c"/></marker>
+<marker id="m-vert" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6fae78"/></marker>
+</defs>
+<rect width="1600" height="1100" rx="16" fill="#0c0b09"/>
+<text x="50" y="46"><tspan fill="#c0965e" font-size="24" font-weight="600" letter-spacing="3">CINETINT</tspan><tspan dx="16" fill="#a39c90" font-size="15">défi 11 : NetworkPolicy cinetint-postgres-acces, seul le back joint postgres-0 sur 5432</tspan></text>
+<text x="40" y="132" text-anchor="start"><tspan fill="#c0965e" font-size="14" font-weight="700">Clients de PostgreSQL (port 5432)</tspan></text>
+<rect x="40" y="150" width="400" height="424" rx="14" fill="none" stroke="#8a8377" stroke-width="1.2" stroke-dasharray="6 5"/>
+<text x="54" y="172" text-anchor="start"><tspan fill="#8a8377" font-size="12" font-weight="400">espace de noms u-XXX (le vôtre)</tspan></text>
+<rect x="56" y="190" width="368" height="62" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="2"/>
+<text x="68" y="208" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">back-7c5b9-j8v3d</tspan></text>
+<text x="68" y="225" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.23  (Node 3)</tspan></text>
+<text x="68" y="242" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">component=back</tspan></text>
+<rect x="56" y="262" width="368" height="62" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="2"/>
+<text x="68" y="280" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">back-7c5b9-q2l7s</tspan></text>
+<text x="68" y="297" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.24  (Node 3)</tspan></text>
+<text x="68" y="314" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">component=back</tspan></text>
+<rect x="56" y="334" width="368" height="62" rx="8" fill="#16140f" stroke="#6fae78" stroke-width="2"/>
+<text x="68" y="352" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">back-7c5b9-h4n6r</tspan></text>
+<text x="68" y="369" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.21  (Node 2)</tspan></text>
+<text x="68" y="386" text-anchor="start"><tspan fill="#6fae78" font-size="12" font-weight="400">component=back</tspan></text>
+<rect x="56" y="424" width="368" height="62" rx="8" fill="#16140f" stroke="#c4584c" stroke-width="2"/>
+<text x="68" y="442" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front-6d8f7-x2k4p</tspan></text>
+<text x="68" y="459" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.14  (Node 2)</tspan></text>
+<text x="68" y="476" text-anchor="start"><tspan fill="#e08a7f" font-size="12" font-weight="400">component=front</tspan></text>
+<rect x="56" y="496" width="368" height="62" rx="8" fill="#16140f" stroke="#c4584c" stroke-width="2"/>
+<text x="68" y="514" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">test-psql</tspan></text>
+<text x="68" y="531" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.40  (Node 3)</tspan></text>
+<text x="68" y="548" text-anchor="start"><tspan fill="#e08a7f" font-size="12" font-weight="400">pod de test, sans component=back</tspan></text>
+<rect x="40" y="598" width="400" height="120" rx="14" fill="none" stroke="#8a8377" stroke-width="1.2" stroke-dasharray="6 5"/>
+<text x="54" y="620" text-anchor="start"><tspan fill="#8a8377" font-size="12" font-weight="400">espace de noms u-autre (une autre équipe)</tspan></text>
+<rect x="56" y="632" width="368" height="62" rx="8" fill="#16140f" stroke="#c4584c" stroke-width="2"/>
+<text x="68" y="650" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">back-7c5b9-z4n8c</tspan></text>
+<text x="68" y="667" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.2.77  (Node 3)</tspan></text>
+<text x="68" y="684" text-anchor="start"><tspan fill="#e08a7f" font-size="12" font-weight="400">component=back, mais autre espace</tspan></text>
+<rect x="520" y="100" width="1050" height="660" rx="14" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="536" y="122" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Node 2 (worker)</tspan><tspan fill="#a39c90" font-size="12" font-weight="400">   pods 10.42.1.0/24</tspan></text>
+<rect x="556" y="140" width="10" height="610" rx="4" fill="#d9b886" opacity="0.45"/>
+<text x="536" y="778" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">pont cni0 (tunnel VXLAN vers Node 3)</tspan></text>
+<rect x="600" y="140" width="280" height="610" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<rect x="800" y="129" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="841.188" y="143.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<text x="614" y="162" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Filtre sur le veth</tspan></text>
+<text x="614" y="180" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">règles iptables de Canal</tspan></text>
+<rect x="610" y="192" width="260" height="226" rx="8" fill="#14201a" stroke="#6fae78" stroke-width="1.5"/>
+<text x="624" y="216" text-anchor="start"><tspan fill="#6fae78" font-size="13" font-weight="700">AUTORISÉ</tspan></text>
+<text x="624" y="240" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">pods de l'espace u-XXX</tspan></text>
+<text x="624" y="260" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">avec l'étiquette component=back</tspan></text>
+<text x="624" y="280" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">vers le port 5432/TCP</tspan></text>
+<text x="624" y="300" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">(ingress.from + ports)</tspan></text>
+<rect x="610" y="430" width="260" height="310" rx="8" fill="#231512" stroke="#c4584c" stroke-width="1.5"/>
+<text x="624" y="454" text-anchor="start"><tspan fill="#e08a7f" font-size="13" font-weight="700">REFUSÉ</tspan></text>
+<text x="624" y="478" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">tout le reste, jeté sans réponse :</tspan></text>
+<text x="624" y="498" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">le front, un pod de test,</tspan></text>
+<text x="624" y="518" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">tout pod d'un autre espace,</tspan></text>
+<text x="624" y="538" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">tout autre port de postgres-0</tspan></text>
+<path d="M424,221 L610,221" fill="none" stroke="#6fae78" stroke-width="2" marker-end="url(#m-vert)"/>
+<path d="M424,293 L610,293" fill="none" stroke="#6fae78" stroke-width="2" marker-end="url(#m-vert)"/>
+<path d="M424,365 L610,365" fill="none" stroke="#6fae78" stroke-width="2" marker-end="url(#m-vert)"/>
+<rect x="451.58" y="189" width="60.84" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="482" y="203.2" text-anchor="middle"><tspan fill="#6fae78" font-size="12" font-weight="400">autorisé</tspan></text>
+<path d="M424,455 L582,455" fill="none" stroke="#c4584c" stroke-width="2"/>
+<circle cx="596" cy="455" r="9" fill="#0c0b09" stroke="#c4584c" stroke-width="2"/>
+<path d="M594,453 L598,457 M594,457 L598,453" stroke="#c4584c" stroke-width="3" fill="none"/>
+<rect x="455.78" y="425" width="52.44" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="482" y="439.2" text-anchor="middle"><tspan fill="#e08a7f" font-size="12" font-weight="400">bloqué</tspan></text>
+<path d="M424,527 L582,527" fill="none" stroke="#c4584c" stroke-width="2"/>
+<circle cx="596" cy="527" r="9" fill="#0c0b09" stroke="#c4584c" stroke-width="2"/>
+<path d="M594,525 L598,529 M594,529 L598,525" stroke="#c4584c" stroke-width="3" fill="none"/>
+<rect x="455.78" y="497" width="52.44" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="482" y="511.2" text-anchor="middle"><tspan fill="#e08a7f" font-size="12" font-weight="400">bloqué</tspan></text>
+<path d="M424,663 L582,663" fill="none" stroke="#c4584c" stroke-width="2"/>
+<circle cx="596" cy="663" r="9" fill="#0c0b09" stroke="#c4584c" stroke-width="2"/>
+<path d="M594,661 L598,665 M594,665 L598,661" stroke="#c4584c" stroke-width="3" fill="none"/>
+<rect x="455.78" y="633" width="52.44" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="482" y="647.2" text-anchor="middle"><tspan fill="#e08a7f" font-size="12" font-weight="400">bloqué</tspan></text>
+<rect x="910" y="130" width="650" height="152" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="924" y="154" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">NetworkPolicy cinetint-postgres-acces</tspan></text>
+<path d="M910,164 L1560,164" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="924" y="185" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="700">podSelector</tspan><tspan fill="#d8d0c2" font-size="12" font-weight="400">  component=postgres  (pods protégés)</tspan></text>
+<text x="924" y="204" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="700">policyTypes</tspan><tspan fill="#d8d0c2" font-size="12" font-weight="400">  Ingress  (seule l'entrée est filtrée)</tspan></text>
+<text x="924" y="223" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="700">ingress.from</tspan><tspan fill="#d8d0c2" font-size="12" font-weight="400">  podSelector component=back</tspan></text>
+<text x="924" y="242" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="700">ingress.ports</tspan><tspan fill="#d8d0c2" font-size="12" font-weight="400">  5432/TCP</tspan></text>
+<rect x="1476" y="119" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="1517.19" y="133.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<rect x="910" y="312" width="650" height="96" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="924" y="336" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Agent Canal (Calico, Felix) sur Node 2</tspan></text>
+<path d="M910,346 L1560,346" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="924" y="367" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">lit la NetworkPolicy auprès de l'API server</tspan></text>
+<text x="924" y="386" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">écrit les règles iptables du veth de postgres-0</tspan></text>
+<path d="M1235,282 L1235,312" fill="none" stroke="#8a8377" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-gris)"/>
+<path d="M910,360 L880,360" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<rect x="960" y="450" width="360" height="150" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="974" y="474" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Pod postgres-0 (StatefulSet)</tspan></text>
+<path d="M960,484 L1320,484" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="974" y="505" text-anchor="start"><tspan fill="#d9b886" font-size="12" font-weight="400">10.42.1.8  :5432</tspan></text>
+<text x="974" y="524" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">component=postgres</tspan></text>
+<text x="974" y="543" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">volume data-postgres-0 (100Mi)</tspan></text>
+<text x="974" y="562" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">ne voit que ce que le filtre laisse passer</tspan></text>
+<path d="M880,525 L960,525" fill="none" stroke="#6fae78" stroke-width="3" marker-end="url(#m-vert)"/>
+<rect x="900.74" y="495" width="38.52" height="20" rx="5" fill="#0c0b09" stroke="#3a342a" stroke-width="0.8"/>
+<text x="920" y="509.2" text-anchor="middle"><tspan fill="#d8d0c2" font-size="12" font-weight="400">veth</tspan></text>
+<rect x="910" y="630" width="650" height="110" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="924" y="654" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Preuve par le test</tspan></text>
+<path d="M910,664 L1560,664" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="924" y="685" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">depuis un pod back : </tspan><tspan fill="#6fae78" font-size="12" font-weight="400">psql -h postgres  -&gt;  connexion acceptée</tspan></text>
+<text x="924" y="704" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">depuis un pod de test : </tspan><tspan fill="#e08a7f" font-size="12" font-weight="400">psql -h postgres  -&gt;  délai dépassé</tspan></text>
+<rect x="40" y="810" width="760" height="150" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="54" y="834" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Comment la règle est appliquée</tspan></text>
+<path d="M40,844 L800,844" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="54" y="865" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">1. la NetworkPolicy est un objet de l'espace u-XXX, stocké dans etcd</tspan></text>
+<text x="54" y="884" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">2. l'agent du CNI (Canal) sur chaque nœud la lit par l'API server</tspan></text>
+<text x="54" y="903" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">3. il pose des règles iptables sur le veth du pod postgres-0</tspan></text>
+<text x="54" y="922" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">4. un pod sélectionné par une règle refuse tout ce qui n'est pas listé</tspan></text>
+<text x="54" y="941" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">5. le filtre est sur le nœud de la base : la source peut venir de n'importe lequel</tspan></text>
+<rect x="830" y="810" width="740" height="170" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="844" y="834" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Ce que le schéma montre</tspan></text>
+<path d="M830,844 L1570,844" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="844" y="865" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">autorisé : les trois pods back (Node 2 et Node 3), étiquette component=back</tspan></text>
+<text x="844" y="884" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">bloqué : le front, qui passe par le back et n'a pas besoin de la base</tspan></text>
+<text x="844" y="903" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">bloqué : un pod de test du même espace de noms</tspan></text>
+<text x="844" y="922" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">bloqué : un pod back d'un autre espace (même étiquette, autre espace)</tspan></text>
+<text x="844" y="941" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">podSelector seul ne franchit pas les espaces : ils sont isolés</tspan></text>
+<text x="844" y="960" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">l'Ingress et les autres Services de l'application ne changent pas</tspan></text>
+<path d="M40,1020 L74,1020" fill="none" stroke="#6fae78" stroke-width="2" marker-end="url(#m-vert)"/>
+<text x="84" y="1024" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">trafic autorisé</tspan></text>
+<path d="M201.76,1020 L235.76,1020" fill="none" stroke="#c4584c" stroke-width="2" marker-end="url(#m-rouge)"/>
+<text x="245.76" y="1024" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">trafic refusé (croix)</tspan></text>
+<path d="M396.52,1020 L430.52,1020" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<text x="440.52" y="1024" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">l'agent programme le filtre</tspan></text>
+<path d="M636.16,1020 L670.16,1020" fill="none" stroke="#8a8377" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#m-gris)"/>
+<text x="680.16" y="1024" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">lecture de l'objet</tspan></text>
+<rect x="815.8" y="1012" width="34" height="16" rx="4" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="859.8" y="1024" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">NOUVEAU : ajouté par ce défi</tspan></text>
+<text x="40" y="1068" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Suite du défi 10 : même application (front, back, qr-generator, qr-verifier, Redis, postgres-0), seule la base est désormais fermée par une règle.</tspan></text>
+</svg>

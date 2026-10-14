@@ -1,0 +1,89 @@
+# back : API REST de la billetterie. Seul composant qui parle à PostgreSQL et à Redis.
+# Sans état (sessions en JWT, verrous dans Redis) : il se multiplie sans précaution.
+{{- $nom := include "cinetint.nom" (dict "ctx" . "n" "back") }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $nom }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "back") | nindent 4 }}
+spec:
+  {{- include "cinetint.repliques" (dict "ctx" . "c" "back" "n" .Values.back.replicas) | nindent 2 }}
+  {{- include "cinetint.miseAJour" . | nindent 2 }}
+  selector:
+    matchLabels:
+      {{- include "cinetint.selecteur" (dict "ctx" . "c" "back") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "cinetint.labels" (dict "ctx" . "c" "back") | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- include "cinetint.pullSecrets" . | nindent 6 }}
+      automountServiceAccountToken: false
+      {{- include "cinetint.secPod" (dict "ctx" . "uid" 1000) | nindent 6 }}
+      {{- include "cinetint.repartition" (dict "ctx" . "c" "back") | nindent 6 }}
+      # le back s'arrête si la base ou Redis ne répondent pas au démarrage : on les attend ici
+      # plutôt que de laisser le conteneur redémarrer en boucle
+      initContainers:
+        - name: attendre-dependances
+          image: {{ .Values.images.outils }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -q -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER"; do echo "attente de PostgreSQL ($POSTGRES_HOST)"; sleep 2; done
+              until nc -z "$REDIS_HOST" 6379; do echo "attente de Redis ($REDIS_HOST)"; sleep 2; done
+          env:
+            {{- include "cinetint.envConfig" (dict "ctx" . "cles" (list "POSTGRES_HOST" "POSTGRES_PORT" "POSTGRES_USER" "REDIS_HOST")) | nindent 12 }}
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 100m, memory: 64Mi}
+          {{- include "cinetint.secConteneur" . | nindent 10 }}
+      containers:
+        - name: back
+          image: {{ include "cinetint.image" (dict "ctx" . "nom" "cinetint-back" "tag" .Values.images.tags.back) }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.back.port }}
+          env:
+            # connexion à la base : l'hôte, le port, le nom et l'utilisateur viennent de la ConfigMap,
+            # le mot de passe du Secret. Kubernetes assemble l'URL avec $(VARIABLE), qui ne
+            # fonctionne que pour les variables déclarées plus haut dans la même liste.
+            {{- include "cinetint.envConfig" (dict "ctx" . "cles" (list "POSTGRES_HOST" "POSTGRES_PORT" "POSTGRES_DB" "POSTGRES_USER")) | nindent 12 }}
+            {{- include "cinetint.envSecret" (dict "ctx" . "cles" (list "POSTGRES_PASSWORD")) | nindent 12 }}
+            - name: DATABASE_URL
+              value: "postgresql+asyncpg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)"
+            {{- include "cinetint.envConfig" (dict "ctx" . "cles" (list "REDIS_URL" "QR_GENERATOR_URL" "CORS_ORIGINS" "PROGRAMME_SOURCE" "DONNEES_DEMO")) | nindent 12 }}
+            {{- include "cinetint.envSecret" (dict "ctx" . "cles" (list "SERVICE_TOKEN" "JWT_SECRET" "GERANT_MOT_DE_PASSE" "CONTROLEUR_MOT_DE_PASSE")) | nindent 12 }}
+          resources:
+            {{- include "cinetint.ressources" (dict "ctx" . "comp" .Values.back) | nindent 12 }}
+          {{- include "cinetint.sondesHttp" (dict "ctx" . "chemin" "/api/sante" "livenessChemin" .Values.sondes.livenessBack "port" "http" "essaisDemarrage" 48) | nindent 10 }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
+          {{- include "cinetint.secConteneur" . | nindent 10 }}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $nom }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "back") | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "cinetint.selecteur" (dict "ctx" . "c" "back") | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.back.port }}
+      targetPort: http

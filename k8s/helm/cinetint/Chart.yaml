@@ -1,0 +1,19 @@
+apiVersion: v2
+name: cinetint
+description: Billetterie de cinéma CinetINT (front, back, qr-generator, qr-verifier, Redis, PostgreSQL) pour Kubernetes
+type: application
+# version de la charte (change quand les modèles changent)
+version: 1.0.0
+# version des images applicatives par défaut (voir images.tags dans values.yaml)
+appVersion: "v1"
+keywords:
+  - billetterie
+  - fastapi
+  - postgresql
+  - redis
+dependencies:
+  # Défi 13 : la réplication PostgreSQL maître/réplique est une charte à part entière,
+  # rangée dans charts/ et activée par l'option postgres-replication.enabled.
+  - name: postgres-replication
+    version: 0.1.0
+    condition: postgres-replication.enabled

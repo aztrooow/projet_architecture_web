@@ -1,0 +1,125 @@
+{{- if and (ne .Values.postgres.mode "externe") (not (include "cinetint.replication" .)) }}
+# PostgreSQL à un seul pod.
+#   mode deployment  (Défi 5 et 6) : Deployment, pas de volume. Les données disparaissent avec le pod.
+#   mode statefulset (Défi 7)      : StatefulSet + volume persistant de 0.1 Go + service headless.
+{{- $nom := include "cinetint.nom" (dict "ctx" . "n" "postgres") }}
+{{- $stateful := eq .Values.postgres.mode "statefulset" }}
+apiVersion: apps/v1
+kind: {{ ternary "StatefulSet" "Deployment" $stateful }}
+metadata:
+  name: {{ $nom }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "postgres") | nindent 4 }}
+spec:
+  replicas: 1
+  {{- if $stateful }}
+  # le StatefulSet donne au pod une identité stable (postgres-0) grâce au service headless du même nom
+  serviceName: {{ $nom }}
+  {{- else }}
+  strategy:
+    type: Recreate
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "cinetint.selecteur" (dict "ctx" . "c" "postgres") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "cinetint.labels" (dict "ctx" . "c" "postgres") | nindent 8 }}
+    spec:
+      {{- include "cinetint.pullSecrets" . | nindent 6 }}
+      automountServiceAccountToken: false
+      {{- include "cinetint.secPod" (dict "ctx" . "uid" 70) | nindent 6 }}
+      containers:
+        - name: postgres
+          image: {{ .Values.images.postgres }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          args:
+            {{- range $cle, $valeur := .Values.postgres.reglages }}
+            - -c
+            - {{ printf "%s=%s" $cle ($valeur | toString) | quote }}
+            {{- end }}
+          env:
+            {{- include "cinetint.envConfig" (dict "ctx" . "cles" (list "POSTGRES_DB" "POSTGRES_USER")) | nindent 12 }}
+            {{- include "cinetint.envSecret" (dict "ctx" . "cles" (list "POSTGRES_PASSWORD")) | nindent 12 }}
+            # sous-dossier du volume : la racine d'un volume formaté contient lost+found, initdb refuse un dossier non vide
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          ports:
+            - name: postgres
+              containerPort: 5432
+          resources:
+            {{- include "cinetint.ressources" (dict "ctx" . "comp" .Values.postgres) | nindent 12 }}
+          {{- if .Values.sondes.startup.enabled }}
+          startupProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            periodSeconds: 3
+            timeoutSeconds: 3
+            failureThreshold: 40
+          {{- end }}
+          {{- if .Values.sondes.readiness.enabled }}
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            periodSeconds: 5
+            timeoutSeconds: 3
+          {{- end }}
+          {{- if .Values.sondes.liveness.enabled }}
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          {{- end }}
+          {{- include "cinetint.secConteneur" . | nindent 10 }}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+            - {name: run, mountPath: /var/run/postgresql}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        {{- if not (and $stateful .Values.postgres.persistance.enabled) }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+  {{- if and $stateful .Values.postgres.persistance.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "cinetint.labels" (dict "ctx" . "c" "postgres") | nindent 10 }}
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- with .Values.postgres.persistance.storageClass }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.postgres.persistance.taille }}
+  {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $nom }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "postgres") | nindent 4 }}
+spec:
+  {{- if $stateful }}
+  # service headless : pas d'IP virtuelle, le DNS renvoie directement l'IP du pod
+  clusterIP: None
+  {{- else }}
+  type: ClusterIP
+  {{- end }}
+  selector:
+    {{- include "cinetint.selecteur" (dict "ctx" . "c" "postgres") | nindent 4 }}
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+{{- end }}

@@ -1,0 +1,26 @@
+# "helm test <release>" : vérifie que les quatre services répondent sur leur route de santé.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "cinetint.nomApp" (dict "ctx" . "n" "test") }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "test") | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  containers:
+    - name: test
+      image: {{ .Values.images.kubectl }}
+      imagePullPolicy: {{ .Values.images.pullPolicy }}
+      command:
+        - sh
+        - -c
+        - |
+          {{- include "cinetint.scriptFumee" . | nindent 10 }}
+          [ "$sante" = ok ]
+      resources:
+        requests: {cpu: 10m, memory: 16Mi}
+        limits: {cpu: 100m, memory: 64Mi}

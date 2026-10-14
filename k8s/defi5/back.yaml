@@ -1,0 +1,70 @@
+# Défi 5 : back (équivalent « api »). Seul composant qui parle à PostgreSQL et à Redis.
+# 3 répliques possibles parce qu'il est sans état : sessions en JWT, verrous de sièges dans Redis.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: back
+  labels:
+    app: back
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: back
+  template:
+    metadata:
+      labels:
+        app: back
+    spec:
+      # le back s'arrête si la base n'est pas joignable au démarrage : on l'attend avant
+      initContainers:
+        - name: attendre-base
+          image: postgres:17-alpine
+          command: ["sh", "-c", "until pg_isready -q -h postgres -p 5432 -U cinetint; do echo attente de PostgreSQL; sleep 2; done"]
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 100m, memory: 64Mi}
+      containers:
+        - name: back
+          image: REGISTRE_IMAGES/cinetint-back:v1
+          ports:
+            - containerPort: 8000
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: POSTGRES_PASSWORD}
+            - name: DATABASE_URL
+              value: postgresql+asyncpg://cinetint:$(POSTGRES_PASSWORD)@postgres:5432/cinetint
+            - name: REDIS_URL
+              value: redis://redis:6379/0
+            - name: QR_GENERATOR_URL
+              value: http://qr-generator:8001
+            - name: SERVICE_TOKEN
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: SERVICE_TOKEN}
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: JWT_SECRET}
+            - name: GERANT_MOT_DE_PASSE
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: GERANT_MOT_DE_PASSE}
+            - name: CONTROLEUR_MOT_DE_PASSE
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: CONTROLEUR_MOT_DE_PASSE}
+          resources:
+            requests: {cpu: 100m, memory: 100Mi}
+            limits: {cpu: 200m, memory: 200Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: back
+  labels:
+    app: back
+spec:
+  type: ClusterIP
+  selector:
+    app: back
+  ports:
+    - port: 8000
+      targetPort: 8000

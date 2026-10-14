@@ -1,0 +1,30 @@
+# Défi 13 : la réplication PostgreSQL comme option de la charte Helm globale.
+
+# 0. retirer la base du défi 12 écrite à la main, s'il en reste une (mêmes noms de ressources)
+NAMESPACE=u-XXX ../appliquer.sh defi12 supprimer
+kubectl delete secret postgres-secrets -n u-XXX --ignore-not-found
+kubectl delete pvc --all -n u-XXX
+helm uninstall cinetint -n u-XXX --ignore-not-found
+
+# 1. la sous-charte et la charte globale passent le contrôle
+helm lint ../helm/cinetint -f ../helm/cinetint/values-cours.yaml -f values-defi13.yaml
+helm template cinetint ../helm/cinetint -f ../helm/cinetint/values-cours.yaml -f values-defi13.yaml | grep -E '^kind:|^  name:' | head -60
+
+# 2. installation de la charte globale avec la réplication activée (postgres-replication.enabled: true)
+helm upgrade --install cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi13.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --timeout 10m
+
+# 3. vérification et démonstration (mêmes commandes qu'au défi 12 ; le Secret s'appelle ici cinetint-secrets)
+kubectl get statefulset,pods,pvc,svc -n u-XXX
+N=u-XXX SECRET=cinetint-secrets ../outils/demo-replication.sh
+
+# 4. l'application tourne sur la base répliquée
+python3 ../outils/parcours.py https://django.MONGROUPE.csc8567.luxbulb.org \
+  --controleur "$(kubectl get secret cinetint-secrets -n u-XXX -o jsonpath='{.data.CONTROLEUR_MOT_DE_PASSE}' | base64 -d)"
+kubectl exec postgres-replique-0 -n u-XXX -c postgres -- psql -U cinetint -d cinetint -c "SELECT count(*) AS films FROM films"
+
+# 5. la sous-charte s'installe aussi seule
+helm install pg ../helm/cinetint/charts/postgres-replication -n u-XXX --set enabled=true --set creerSecret=true

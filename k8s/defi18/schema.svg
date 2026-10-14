@@ -1,0 +1,198 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1240" width="1600" height="1240" font-family="Verdana, 'DejaVu Sans', 'Segoe UI', Arial, sans-serif">
+<title>Défi 18 : durcissement de l'infrastructure en quatre couches</title>
+<defs>
+
+</defs>
+<rect width="1600" height="1240" rx="16" fill="#0c0b09"/>
+<text x="50" y="46"><tspan fill="#c0965e" font-size="24" font-weight="600" letter-spacing="3">CINETINT</tspan><tspan dx="16" fill="#a39c90" font-size="15">défi 18 : Ingress limité, NetworkPolicy partout, pods durcis, Secrets générés</tspan></text>
+<rect x="40" y="70" width="1520" height="196" rx="12" fill="#100f0b" stroke="#c0965e" stroke-width="1.5"/>
+<circle cx="70" cy="100" r="16" fill="#c0965e"/>
+<text x="70" y="104.2" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">1</text>
+<text x="100" y="106" text-anchor="start"><tspan fill="#f3ebdd" font-size="15" font-weight="700">Ingress : limiter ce qui entre</tspan><tspan fill="#a39c90" font-size="12" font-weight="400">     le contrôleur ingress-nginx applique ces annotations à chaque requête</tspan></text>
+<rect x="60" y="126" width="350" height="80" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="70" y="144" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">limit-rps : 20</tspan></text>
+<text x="70" y="162" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">20 requêtes par seconde</tspan></text>
+<text x="70" y="179" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">et par adresse IP cliente</tspan></text>
+<rect x="430" y="126" width="350" height="80" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="440" y="144" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">limit-connections : 30</tspan></text>
+<text x="440" y="162" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">30 connexions simultanées</tspan></text>
+<text x="440" y="179" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">au plus par adresse IP</tspan></text>
+<rect x="800" y="126" width="350" height="80" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="810" y="144" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">proxy-body-size : 1m</tspan></text>
+<text x="810" y="162" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">corps de requête limité à</tspan></text>
+<text x="810" y="179" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">1 Mio : pas de gros envoi</tspan></text>
+<rect x="1170" y="126" width="350" height="80" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="1180" y="144" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">délais de connexion</tspan></text>
+<text x="1180" y="162" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">proxy-connect/read/send :</tspan></text>
+<text x="1180" y="179" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">un client lent ne bloque rien</tspan></text>
+<text x="60" y="240" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Le flux SSE du back garde un délai de lecture long (3600 s) sur son propre Ingress.</tspan></text>
+<rect x="40" y="286" width="1520" height="382" rx="12" fill="#100f0b" stroke="#c0965e" stroke-width="1.5"/>
+<circle cx="70" cy="316" r="16" fill="#c0965e"/>
+<text x="70" y="320.2" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">2</text>
+<text x="100" y="322" text-anchor="start"><tspan fill="#f3ebdd" font-size="15" font-weight="700">NetworkPolicy : tout fermé, sauf ce qui sert</tspan><tspan fill="#a39c90" font-size="12" font-weight="400">     une règle par composant, et isolation entre espaces de noms</tspan></text>
+<text x="224" y="364" text-anchor="end"><tspan fill="#a39c90" font-size="12" font-weight="400">de  \  vers</tspan></text>
+<text x="305" y="364" text-anchor="middle"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front</tspan></text>
+<text x="455" y="364" text-anchor="middle"><tspan fill="#f3ebdd" font-size="12" font-weight="700">back</tspan></text>
+<text x="605" y="364" text-anchor="middle"><tspan fill="#f3ebdd" font-size="12" font-weight="700">qr-generator</tspan></text>
+<text x="755" y="364" text-anchor="middle"><tspan fill="#f3ebdd" font-size="12" font-weight="700">qr-verifier</tspan></text>
+<text x="905" y="364" text-anchor="middle"><tspan fill="#f3ebdd" font-size="12" font-weight="700">redis</tspan></text>
+<text x="1055" y="364" text-anchor="middle"><tspan fill="#f3ebdd" font-size="12" font-weight="700">postgres</tspan></text>
+<text x="224" y="393" text-anchor="end"><tspan fill="#f3ebdd" font-size="12" font-weight="700">ingress-nginx</tspan></text>
+<rect x="234" y="374" width="142" height="28" rx="5" fill="#14201a" stroke="#6fae78" stroke-width="1.5"/>
+<circle cx="305" cy="389" r="8" fill="#0c0b09" stroke="#6fae78" stroke-width="2"/>
+<path d="M300,389 L304,393 L311,384" stroke="#6fae78" stroke-width="3" fill="none"/>
+<rect x="384" y="374" width="142" height="28" rx="5" fill="#14201a" stroke="#6fae78" stroke-width="1.5"/>
+<circle cx="455" cy="389" r="8" fill="#0c0b09" stroke="#6fae78" stroke-width="2"/>
+<path d="M450,389 L454,393 L461,384" stroke="#6fae78" stroke-width="3" fill="none"/>
+<rect x="534" y="374" width="142" height="28" rx="5" fill="#14201a" stroke="#6fae78" stroke-width="1.5"/>
+<circle cx="605" cy="389" r="8" fill="#0c0b09" stroke="#6fae78" stroke-width="2"/>
+<path d="M600,389 L604,393 L611,384" stroke="#6fae78" stroke-width="3" fill="none"/>
+<rect x="684" y="374" width="142" height="28" rx="5" fill="#14201a" stroke="#6fae78" stroke-width="1.5"/>
+<circle cx="755" cy="389" r="8" fill="#0c0b09" stroke="#6fae78" stroke-width="2"/>
+<path d="M750,389 L754,393 L761,384" stroke="#6fae78" stroke-width="3" fill="none"/>
+<rect x="834" y="374" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="905" y="393" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="984" y="374" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="1055" y="393" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<text x="224" y="425" text-anchor="end"><tspan fill="#f3ebdd" font-size="12" font-weight="700">front</tspan></text>
+<rect x="234" y="406" width="142" height="28" rx="5" fill="#0f0e0b" stroke="#3a342a" stroke-width="1"/>
+<rect x="384" y="406" width="142" height="28" rx="5" fill="#14201a" stroke="#6fae78" stroke-width="1.5"/>
+<circle cx="455" cy="421" r="8" fill="#0c0b09" stroke="#6fae78" stroke-width="2"/>
+<path d="M450,421 L454,425 L461,416" stroke="#6fae78" stroke-width="3" fill="none"/>
+<rect x="534" y="406" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="605" y="425" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="684" y="406" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="755" y="425" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="834" y="406" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="905" y="425" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="984" y="406" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="1055" y="425" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<text x="224" y="457" text-anchor="end"><tspan fill="#f3ebdd" font-size="12" font-weight="700">back</tspan></text>
+<rect x="234" y="438" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="305" y="457" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="384" y="438" width="142" height="28" rx="5" fill="#0f0e0b" stroke="#3a342a" stroke-width="1"/>
+<rect x="534" y="438" width="142" height="28" rx="5" fill="#14201a" stroke="#6fae78" stroke-width="1.5"/>
+<circle cx="605" cy="453" r="8" fill="#0c0b09" stroke="#6fae78" stroke-width="2"/>
+<path d="M600,453 L604,457 L611,448" stroke="#6fae78" stroke-width="3" fill="none"/>
+<rect x="684" y="438" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="755" y="457" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="834" y="438" width="142" height="28" rx="5" fill="#14201a" stroke="#6fae78" stroke-width="1.5"/>
+<circle cx="905" cy="453" r="8" fill="#0c0b09" stroke="#6fae78" stroke-width="2"/>
+<path d="M900,453 L904,457 L911,448" stroke="#6fae78" stroke-width="3" fill="none"/>
+<rect x="984" y="438" width="142" height="28" rx="5" fill="#14201a" stroke="#6fae78" stroke-width="1.5"/>
+<circle cx="1055" cy="453" r="8" fill="#0c0b09" stroke="#6fae78" stroke-width="2"/>
+<path d="M1050,453 L1054,457 L1061,448" stroke="#6fae78" stroke-width="3" fill="none"/>
+<text x="224" y="489" text-anchor="end"><tspan fill="#f3ebdd" font-size="12" font-weight="700">qr-generator</tspan></text>
+<rect x="234" y="470" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="305" y="489" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="384" y="470" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="455" y="489" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="534" y="470" width="142" height="28" rx="5" fill="#0f0e0b" stroke="#3a342a" stroke-width="1"/>
+<rect x="684" y="470" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="755" y="489" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="834" y="470" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="905" y="489" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="984" y="470" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="1055" y="489" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<text x="224" y="521" text-anchor="end"><tspan fill="#f3ebdd" font-size="12" font-weight="700">qr-verifier</tspan></text>
+<rect x="234" y="502" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="305" y="521" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="384" y="502" width="142" height="28" rx="5" fill="#14201a" stroke="#6fae78" stroke-width="1.5"/>
+<circle cx="455" cy="517" r="8" fill="#0c0b09" stroke="#6fae78" stroke-width="2"/>
+<path d="M450,517 L454,521 L461,512" stroke="#6fae78" stroke-width="3" fill="none"/>
+<rect x="534" y="502" width="142" height="28" rx="5" fill="#14201a" stroke="#6fae78" stroke-width="1.5"/>
+<circle cx="605" cy="517" r="8" fill="#0c0b09" stroke="#6fae78" stroke-width="2"/>
+<path d="M600,517 L604,521 L611,512" stroke="#6fae78" stroke-width="3" fill="none"/>
+<rect x="684" y="502" width="142" height="28" rx="5" fill="#0f0e0b" stroke="#3a342a" stroke-width="1"/>
+<rect x="834" y="502" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="905" y="521" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="984" y="502" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="1055" y="521" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<text x="224" y="553" text-anchor="end"><tspan fill="#f3ebdd" font-size="12" font-weight="700">redis</tspan></text>
+<rect x="234" y="534" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="305" y="553" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="384" y="534" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="455" y="553" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="534" y="534" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="605" y="553" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="684" y="534" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="755" y="553" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="834" y="534" width="142" height="28" rx="5" fill="#0f0e0b" stroke="#3a342a" stroke-width="1"/>
+<rect x="984" y="534" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="1055" y="553" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<text x="224" y="585" text-anchor="end"><tspan fill="#f3ebdd" font-size="12" font-weight="700">postgres</tspan></text>
+<rect x="234" y="566" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="305" y="585" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="384" y="566" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="455" y="585" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="534" y="566" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="605" y="585" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="684" y="566" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="755" y="585" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="834" y="566" width="142" height="28" rx="5" fill="#1b1311" stroke="#3a342a" stroke-width="1"/>
+<text x="905" y="585" text-anchor="middle"><tspan fill="#9a5a52" font-size="12" font-weight="400">refusé</tspan></text>
+<rect x="984" y="566" width="142" height="28" rx="5" fill="#0f0e0b" stroke="#3a342a" stroke-width="1"/>
+<rect x="1160" y="354" width="380" height="232" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="1174" y="378" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Lecture de la matrice</tspan></text>
+<path d="M1160,388 L1540,388" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="1174" y="409" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">case verte : flux autorisé</tspan></text>
+<text x="1174" y="428" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">(ingress.from et ports)</tspan></text>
+<text x="1174" y="447" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">toute autre case : refusé</tspan></text>
+<text x="1174" y="466" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">front vers la base : refusé,</tspan></text>
+<text x="1174" y="485" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">il passe par le back</tspan></text>
+<text x="1174" y="504" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">un pod d'un autre espace de</tspan></text>
+<text x="1174" y="523" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">noms ne joint rien</tspan></text>
+<rect x="1456" y="343" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="1497.19" y="357.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<text x="60" y="638" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Étiquettes app.kubernetes.io/component : front, back, qr-generator, qr-verifier, redis, postgres, sauvegarde, test.</tspan></text>
+<text x="60" y="656" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Un pod sans l'étiquette attendue, du même espace de noms ou d'un autre : le paquet est jeté sur le veth du pod de destination.</tspan></text>
+<rect x="40" y="688" width="1520" height="272" rx="12" fill="#100f0b" stroke="#c0965e" stroke-width="1.5"/>
+<circle cx="70" cy="718" r="16" fill="#c0965e"/>
+<text x="70" y="722.2" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">3</text>
+<text x="100" y="724" text-anchor="start"><tspan fill="#f3ebdd" font-size="15" font-weight="700">Pod : un conteneur sans privilèges</tspan><tspan fill="#a39c90" font-size="12" font-weight="400">     securityContext de chaque pod applicatif et de la base, posé par la charte</tspan></text>
+<rect x="60" y="740" width="475" height="96" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="70" y="758" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">runAsNonRoot, uid 1000</tspan></text>
+<text x="70" y="776" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">70 pour postgres, 999 pour redis</tspan></text>
+<text x="70" y="793" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">aucun processus root</tspan></text>
+<rect x="555" y="740" width="475" height="96" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="565" y="758" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">allowPrivilegeEscalation : false</tspan></text>
+<text x="565" y="776" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">un processus ne peut pas</tspan></text>
+<text x="565" y="793" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">gagner des droits</tspan></text>
+<rect x="1050" y="740" width="475" height="96" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="1060" y="758" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">capabilities : drop ALL</tspan></text>
+<text x="1060" y="776" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">aucune capacité Linux</tspan></text>
+<text x="1060" y="793" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">(pas de NET_RAW, pas de chown)</tspan></text>
+<rect x="60" y="848" width="475" height="96" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="70" y="866" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">readOnlyRootFilesystem : true</tspan></text>
+<text x="70" y="884" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">système de fichiers en lecture</tspan></text>
+<text x="70" y="901" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">seule, emptyDir sur /tmp</tspan></text>
+<rect x="555" y="848" width="475" height="96" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="565" y="866" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">seccomp : RuntimeDefault</tspan></text>
+<text x="565" y="884" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">appels système filtrés par</tspan></text>
+<text x="565" y="901" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">le profil par défaut du runtime</tspan></text>
+<rect x="1050" y="848" width="475" height="96" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="1060" y="866" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">automountServiceAccountToken : false</tspan></text>
+<text x="1060" y="884" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">le pod ne reçoit aucun jeton</tspan></text>
+<text x="1060" y="901" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">pour parler à l'API server</tspan></text>
+<rect x="40" y="980" width="1520" height="140" rx="12" fill="#100f0b" stroke="#c0965e" stroke-width="1.5"/>
+<circle cx="70" cy="1010" r="16" fill="#c0965e"/>
+<text x="70" y="1014.2" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">4</text>
+<text x="100" y="1016" text-anchor="start"><tspan fill="#f3ebdd" font-size="15" font-weight="700">Secrets : générés, jamais écrits</tspan><tspan fill="#a39c90" font-size="12" font-weight="400">     mots de passe et clé de signature créés par la charte</tspan></text>
+<rect x="60" y="1032" width="475" height="76" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="70" y="1050" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">mots de passe aléatoires</tspan></text>
+<text x="70" y="1068" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">POSTGRES_PASSWORD et autres,</tspan></text>
+<text x="70" y="1085" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">générés au premier install</tspan></text>
+<rect x="555" y="1032" width="475" height="76" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="565" y="1050" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">clé de signature Ed25519</tspan></text>
+<text x="565" y="1068" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Secret cinetint-cle, montée</tspan></text>
+<text x="565" y="1085" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">dans qr-generator et qr-verifier</tspan></text>
+<rect x="1050" y="1032" width="475" height="76" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="1.5"/>
+<text x="1060" y="1050" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">jamais dans le dépôt</tspan></text>
+<text x="1060" y="1068" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">ni dans values.yaml : conservés</tspan></text>
+<text x="1060" y="1085" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">tels quels aux mises à jour</tspan></text>
+<rect x="40" y="1148" width="34" height="16" rx="4" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="84" y="1160" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">flux autorisé</tspan></text>
+<rect x="193.12" y="1148" width="34" height="16" rx="4" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="237.12" y="1160" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">NOUVEAU : protection ajoutée par ce défi</tspan></text>
+<text x="40" y="1200" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Les quatre couches s'ajoutent : une requête franchit l'Ingress, puis la NetworkPolicy, puis atteint un pod qui ne peut presque rien faire.</tspan></text>
+</svg>

@@ -1,0 +1,64 @@
+# qr-verifier : contrôle d'entrée. Ne connaît que la clé publique (demandée au qr-generator).
+# Son seul état est la liste des passages à rejouer quand le back est indisponible (en mémoire).
+{{- $nom := include "cinetint.nom" (dict "ctx" . "n" "qr-verifier") }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $nom }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "qr-verifier") | nindent 4 }}
+spec:
+  {{- include "cinetint.repliques" (dict "ctx" . "c" "qr-verifier" "n" .Values.qrVerifier.replicas) | nindent 2 }}
+  {{- include "cinetint.miseAJour" . | nindent 2 }}
+  selector:
+    matchLabels:
+      {{- include "cinetint.selecteur" (dict "ctx" . "c" "qr-verifier") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "cinetint.labels" (dict "ctx" . "c" "qr-verifier") | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- include "cinetint.pullSecrets" . | nindent 6 }}
+      automountServiceAccountToken: false
+      {{- include "cinetint.secPod" (dict "ctx" . "uid" 1000) | nindent 6 }}
+      {{- include "cinetint.repartition" (dict "ctx" . "c" "qr-verifier") | nindent 6 }}
+      containers:
+        - name: qr-verifier
+          image: {{ include "cinetint.image" (dict "ctx" . "nom" "cinetint-qr-verifier" "tag" .Values.images.tags.qrVerifier) }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.qrVerifier.port }}
+          env:
+            {{- include "cinetint.envConfig" (dict "ctx" . "cles" (list "BACK_URL" "QR_GENERATOR_URL" "CORS_ORIGINS")) | nindent 12 }}
+            {{- include "cinetint.envSecret" (dict "ctx" . "cles" (list "SERVICE_TOKEN" "JWT_SECRET")) | nindent 12 }}
+          resources:
+            {{- include "cinetint.ressources" (dict "ctx" . "comp" .Values.qrVerifier) | nindent 12 }}
+          {{- include "cinetint.sondesHttp" (dict "ctx" . "chemin" "/verification/sante" "port" "http") | nindent 10 }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
+          {{- include "cinetint.secConteneur" . | nindent 10 }}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $nom }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "qr-verifier") | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "cinetint.selecteur" (dict "ctx" . "c" "qr-verifier") | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.qrVerifier.port }}
+      targetPort: http

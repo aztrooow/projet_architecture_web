@@ -1,0 +1,71 @@
+# qr-generator : signe les billets (Ed25519), dessine les QR codes et le PDF.
+# Seul détenteur de la clé privée, que toutes les répliques lisent dans le même Secret.
+{{- $nom := include "cinetint.nom" (dict "ctx" . "n" "qr-generator") }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $nom }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "qr-generator") | nindent 4 }}
+spec:
+  {{- include "cinetint.repliques" (dict "ctx" . "c" "qr-generator" "n" .Values.qrGenerator.replicas) | nindent 2 }}
+  {{- include "cinetint.miseAJour" . | nindent 2 }}
+  selector:
+    matchLabels:
+      {{- include "cinetint.selecteur" (dict "ctx" . "c" "qr-generator") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "cinetint.labels" (dict "ctx" . "c" "qr-generator") | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- include "cinetint.pullSecrets" . | nindent 6 }}
+      automountServiceAccountToken: false
+      {{- include "cinetint.secPod" (dict "ctx" . "uid" 1000) | nindent 6 }}
+      {{- include "cinetint.repartition" (dict "ctx" . "c" "qr-generator") | nindent 6 }}
+      containers:
+        - name: qr-generator
+          image: {{ include "cinetint.image" (dict "ctx" . "nom" "cinetint-qr-generator" "tag" .Values.images.tags.qrGenerator) }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.qrGenerator.port }}
+          env:
+            - name: CLE_PRIVEE_FICHIER
+              value: /cles/cle-ed25519.pem
+            {{- include "cinetint.envConfig" (dict "ctx" . "cles" (list "CORS_ORIGINS")) | nindent 12 }}
+            {{- include "cinetint.envSecret" (dict "ctx" . "cles" (list "SERVICE_TOKEN")) | nindent 12 }}
+          resources:
+            {{- include "cinetint.ressources" (dict "ctx" . "comp" .Values.qrGenerator) | nindent 12 }}
+          {{- include "cinetint.sondesHttp" (dict "ctx" . "chemin" "/qr/sante" "port" "http") | nindent 10 }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
+          {{- include "cinetint.secConteneur" . | nindent 10 }}
+          volumeMounts:
+            - {name: cle, mountPath: /cles, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: cle
+          secret:
+            secretName: {{ include "cinetint.nomApp" (dict "ctx" . "n" "cle") }}
+            defaultMode: {{ ternary 288 420 (.Values.global.securite | default false) }}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $nom }}
+  labels:
+    {{- include "cinetint.labels" (dict "ctx" . "c" "qr-generator") | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "cinetint.selecteur" (dict "ctx" . "c" "qr-generator") | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.qrGenerator.port }}
+      targetPort: http

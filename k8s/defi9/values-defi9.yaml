@@ -1,0 +1,51 @@
+# Défi 9 : un HorizontalPodAutoscaler sur le front et un sur le back (60 % de CPU, 3 à 10 pods).
+# Valeurs cumulatives : ce fichier contient l'état complet voulu à la fin du défi.
+# Utilisation : helm upgrade --install cinetint ../helm/cinetint -n u-XXX -f ../helm/cinetint/values-cours.yaml -f values-defi9.yaml
+
+global:
+  securite: false
+
+postgres:
+  mode: statefulset
+  persistance:
+    enabled: true
+
+postgres-replication:
+  enabled: false
+
+images:
+  tags:
+    front: v2
+    back: v1
+    qrGenerator: v1
+    qrVerifier: v1
+
+sondes:
+  startup: {enabled: false}
+  readiness: {enabled: true}
+  liveness: {enabled: false}
+
+hpa:
+  enabled: true
+
+networkPolicies:
+  postgres:
+    enabled: false
+  applicatives:
+    enabled: false
+
+ingress:
+  limites:
+    enabled: false
+
+hooks:
+  configMap:
+    enabled: false
+  sauvegarde:
+    enabled: false
+  testFumee:
+    enabled: false
+
+sauvegardes:
+  enabled: false
+  planifiee: false

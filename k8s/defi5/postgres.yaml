@@ -1,0 +1,53 @@
+# Défi 5 : la base reste dans un Deployment d'un seul Pod, sans volume (ressources identiques à front et back).
+# Limite connue (question du sujet) : un Deployment est fait pour des applications sans état.
+# Les données sont dans le système de fichiers du conteneur : si le Pod est recréé, elles disparaissent.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate        # jamais deux Pods PostgreSQL en même temps
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          args: ["-c", "shared_buffers=32MB", "-c", "max_wal_size=48MB", "-c", "min_wal_size=32MB"]
+          ports:
+            - containerPort: 5432
+          env:
+            - {name: POSTGRES_DB, value: cinetint}
+            - {name: POSTGRES_USER, value: cinetint}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: POSTGRES_PASSWORD}
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+          resources:
+            requests: {cpu: 100m, memory: 100Mi}
+            limits: {cpu: 200m, memory: 200Mi}
+---
+# Service ClusterIP de la base. Le DNS "postgres" (postgres.<namespace>.svc.cluster.local)
+# pointe vers son IP virtuelle ; kube-proxy la redirige vers le Pod.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432

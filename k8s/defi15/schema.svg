@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1140" width="1600" height="1140" font-family="Verdana, 'DejaVu Sans', 'Segoe UI', Arial, sans-serif">
+<title>Défi 15 : cycle de vie d'une release Helm et hooks</title>
+<defs>
+<marker id="m-gris" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8a8377"/></marker>
+<marker id="m-or" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0965e"/></marker>
+<marker id="m-rouge" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c4584c"/></marker>
+</defs>
+<rect width="1600" height="1140" rx="16" fill="#0c0b09"/>
+<text x="50" y="46"><tspan fill="#c0965e" font-size="24" font-weight="600" letter-spacing="3">CINETINT</tspan><tspan dx="16" fill="#a39c90" font-size="15">défi 15 : helm upgrade en bandes, hooks pre-upgrade, post-upgrade et post-delete</tspan></text>
+<path d="M36,70 L36,970" fill="none" stroke="#c0965e" stroke-width="3" marker-end="url(#m-or)"/>
+<text x="36" y="992" text-anchor="middle"><tspan fill="#d8d0c2" font-size="12" font-weight="700">temps</tspan></text>
+<rect x="60" y="70" width="1500" height="100" rx="12" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="76" y="98" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Avant tout</tspan></text>
+<text x="76" y="119" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">pre-install, pre-upgrade</tspan></text>
+<text x="76" y="137" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">poids -20</tspan></text>
+<rect x="280" y="86" width="330" height="66" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="3"/>
+<text x="290" y="104" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ServiceAccount cinetint-hooks</tspan></text>
+<text x="290" y="122" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">identité des pods Job</tspan></text>
+<rect x="526" y="75" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="567.188" y="89.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<rect x="630" y="86" width="330" height="66" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="3"/>
+<text x="640" y="104" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Role cinetint-hooks</tspan></text>
+<text x="640" y="122" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">ConfigMaps : get, create, patch, delete</tspan></text>
+<rect x="876" y="75" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="917.188" y="89.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<rect x="980" y="86" width="330" height="66" rx="8" fill="#1d1a13" stroke="#c0965e" stroke-width="3"/>
+<text x="990" y="104" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">RoleBinding cinetint-hooks</tspan></text>
+<text x="990" y="122" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">relie le rôle au compte</tspan></text>
+<rect x="1226" y="75" width="82.376" height="20" rx="10" fill="#c0965e"/>
+<text x="1267.19" y="89.5" text-anchor="middle" fill="#0c0b09" font-size="12" font-weight="700">NOUVEAU</text>
+<text x="1330" y="114" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">créés avant les Jobs</tspan></text>
+<text x="1330" y="132" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">qui s'en servent</tspan></text>
+<rect x="60" y="190" width="1500" height="230" rx="12" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="76" y="218" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">pre-upgrade</tspan></text>
+<text x="76" y="239" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">avant la mise à jour</tspan></text>
+<text x="76" y="257" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Helm attend la fin de</tspan></text>
+<text x="76" y="275" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">chaque Job avant d'avancer</tspan></text>
+<rect x="280" y="206" width="340" height="84" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="292" y="228" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Job config-avant</tspan></text>
+<text x="608" y="228" text-anchor="end"><tspan fill="#d9b886" font-size="12" font-weight="400">poids 0</tspan></text>
+<text x="292" y="250" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">pod kubectl, compte cinetint-hooks</tspan></text>
+<text x="292" y="268" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">écrit le carnet de déploiement</tspan></text>
+<path d="M620,248 L660,248" fill="none" stroke="#8a8377" stroke-width="2" marker-end="url(#m-gris)"/>
+<rect x="660" y="206" width="380" height="84" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="670" y="224" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ConfigMap cinetint-deploiement</tspan></text>
+<text x="670" y="242" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">etat=en-cours, revision, versions</tspan></text>
+<text x="670" y="259" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">debut=date de début</tspan></text>
+<text x="1070" y="244" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">le carnet dit où en est le déploiement</tspan></text>
+<path d="M450,290 L450,322" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<text x="466" y="311" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">puis, poids 5</tspan></text>
+<rect x="280" y="322" width="340" height="84" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="292" y="344" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Job sauvegarde-avant</tspan></text>
+<text x="608" y="344" text-anchor="end"><tspan fill="#d9b886" font-size="12" font-weight="400">poids 5</tspan></text>
+<text x="292" y="366" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">pod postgres:17-alpine : pg_dump -Fc</tspan></text>
+<text x="292" y="384" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">lit la base par le Service postgres</tspan></text>
+<path d="M620,364 L660,364" fill="none" stroke="#8a8377" stroke-width="2" marker-end="url(#m-gris)"/>
+<rect x="660" y="322" width="380" height="84" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="670" y="340" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">PVC cinetint-sauvegardes</tspan></text>
+<text x="670" y="358" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">200Mi, distinct de data-postgres-0</tspan></text>
+<text x="670" y="375" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">reçoit le fichier .dump d'avant</tspan></text>
+<text x="1070" y="360" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">rendu seulement si le volume existe déjà</tspan></text>
+<rect x="60" y="440" width="1500" height="140" rx="12" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="76" y="468" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Application</tspan></text>
+<text x="76" y="489" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">Helm applique</tspan></text>
+<text x="76" y="507" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">les manifests</tspan></text>
+<rect x="280" y="458" width="250" height="100" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="290" y="476" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">Deployment front</tspan></text>
+<text x="290" y="494" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">mise à jour progressive,</tspan></text>
+<text x="290" y="511" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">un pod à la fois</tspan></text>
+<text x="290" y="528" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">maxSurge 1, maxUnavailable 0</tspan></text>
+<rect x="550" y="458" width="250" height="100" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="560" y="476" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">Deployment back</tspan></text>
+<text x="560" y="494" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">mise à jour progressive,</tspan></text>
+<text x="560" y="511" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">un pod à la fois</tspan></text>
+<text x="560" y="528" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">maxSurge 1, maxUnavailable 0</tspan></text>
+<rect x="820" y="458" width="250" height="100" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="830" y="476" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">Deployment qr-generator</tspan></text>
+<text x="830" y="494" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">mise à jour progressive,</tspan></text>
+<text x="830" y="511" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">un pod à la fois</tspan></text>
+<text x="830" y="528" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">maxSurge 1, maxUnavailable 0</tspan></text>
+<rect x="1090" y="458" width="250" height="100" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="1100" y="476" text-anchor="start"><tspan fill="#f3ebdd" font-size="12" font-weight="700">Deployment qr-verifier</tspan></text>
+<text x="1100" y="494" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">mise à jour progressive,</tspan></text>
+<text x="1100" y="511" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">un pod à la fois</tspan></text>
+<text x="1100" y="528" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">maxSurge 1, maxUnavailable 0</tspan></text>
+<text x="1370" y="500" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">postgres et redis :</tspan></text>
+<text x="1370" y="518" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">inchangés ici</tspan></text>
+<rect x="60" y="600" width="1500" height="230" rx="12" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="76" y="628" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">post-upgrade</tspan></text>
+<text x="76" y="649" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">après la mise à jour</tspan></text>
+<text x="76" y="667" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">poids 0 puis poids 5</tspan></text>
+<rect x="280" y="616" width="340" height="84" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="292" y="638" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Job config-apres</tspan></text>
+<text x="608" y="638" text-anchor="end"><tspan fill="#d9b886" font-size="12" font-weight="400">poids 0</tspan></text>
+<text x="292" y="660" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">test de fumée des 4 services</tspan></text>
+<text x="292" y="678" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">puis écrit etat=termine</tspan></text>
+<path d="M620,658 L660,658" fill="none" stroke="#8a8377" stroke-width="2" marker-end="url(#m-gris)"/>
+<rect x="660" y="616" width="380" height="84" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="670" y="634" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ConfigMap cinetint-deploiement</tspan></text>
+<text x="670" y="652" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">etat=termine, sante, fin</tspan></text>
+<text x="670" y="669" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">le Job échoue si un service ne répond pas</tspan></text>
+<text x="1070" y="654" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">la release n'est « terminée » qu'après le test</tspan></text>
+<path d="M450,700 L450,732" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<text x="466" y="721" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">puis, poids 5</tspan></text>
+<rect x="280" y="732" width="340" height="84" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="292" y="754" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Job sauvegarde-apres</tspan></text>
+<text x="608" y="754" text-anchor="end"><tspan fill="#d9b886" font-size="12" font-weight="400">poids 5</tspan></text>
+<text x="292" y="776" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">pod postgres:17-alpine : pg_dump -Fc</tspan></text>
+<text x="292" y="794" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">état final de la base</tspan></text>
+<path d="M620,774 L660,774" fill="none" stroke="#8a8377" stroke-width="2" marker-end="url(#m-gris)"/>
+<rect x="660" y="732" width="380" height="84" rx="8" fill="#1d1a13" stroke="#3a342a" stroke-width="1.5"/>
+<text x="670" y="750" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">PVC cinetint-sauvegardes</tspan></text>
+<text x="670" y="768" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">même volume : un second .dump</tspan></text>
+<text x="670" y="785" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">étiquette apres-rev&lt;N&gt;</tspan></text>
+<text x="1070" y="770" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">avant et après : on peut revenir en arrière</tspan></text>
+<rect x="60" y="850" width="1500" height="120" rx="12" fill="#100f0b" stroke="#8a8377" stroke-width="1.2"/>
+<text x="76" y="878" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">post-delete</tspan></text>
+<text x="76" y="899" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">à helm uninstall</tspan></text>
+<rect x="280" y="866" width="340" height="84" rx="8" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="292" y="888" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">Job nettoyage</tspan></text>
+<text x="608" y="888" text-anchor="end"><tspan fill="#d9b886" font-size="12" font-weight="400">poids 0</tspan></text>
+<text x="292" y="910" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">kubectl delete configmap</tspan></text>
+<text x="292" y="928" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">cinetint-deploiement</tspan></text>
+<path d="M620,908 L660,908" fill="none" stroke="#c4584c" stroke-width="2" marker-end="url(#m-rouge)"/>
+<rect x="660" y="866" width="380" height="84" rx="8" fill="#1d1a13" stroke="#c4584c" stroke-width="1.5"/>
+<text x="670" y="884" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">ConfigMap supprimée</tspan></text>
+<text x="670" y="902" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">créée par un Job : Helm ne la connaît pas</tspan></text>
+<rect x="1070" y="866" width="460" height="84" rx="8" fill="#1d1a13" stroke="#6fae78" stroke-width="1.5"/>
+<text x="1080" y="884" text-anchor="start"><tspan fill="#f3ebdd" font-size="13" font-weight="700">PVC cinetint-sauvegardes : conservé</tspan></text>
+<text x="1080" y="902" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">helm.sh/resource-policy: keep</tspan></text>
+<rect x="60" y="1000" width="1500" height="74" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="74" y="1024" text-anchor="start"><tspan fill="#f3ebdd" font-size="14" font-weight="700">Règle des hooks</tspan></text>
+<path d="M60,1034 L1560,1034" fill="none" stroke="#3a342a" stroke-width="1"/>
+<text x="74" y="1055" text-anchor="start"><tspan fill="#a39c90" font-size="12" font-weight="400">chaque hook est un Job (pod éphémère, hook-delete-policy hook-succeeded : supprimé après succès) ; Helm les lance par poids croissant, et si l'un échoue, la mise à jour s'arrête</tspan></text>
+<path d="M60,1104 L94,1104" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#m-or)"/>
+<text x="104" y="1108" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">ordre d'exécution</tspan></text>
+<path d="M243.6,1104 L277.6,1104" fill="none" stroke="#8a8377" stroke-width="2" marker-end="url(#m-gris)"/>
+<text x="287.6" y="1108" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">écrit dans</tspan></text>
+<rect x="381" y="1096" width="34" height="16" rx="4" fill="#16140f" stroke="#c0965e" stroke-width="3"/>
+<text x="425" y="1108" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">Job ou droit créé par ce défi</tspan></text>
+<rect x="632.4" y="1096" width="34" height="16" rx="4" fill="#16140f" stroke="#c4584c" stroke-width="1.5"/>
+<text x="676.4" y="1108" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">supprimé</tspan></text>
+<rect x="766.56" y="1096" width="34" height="16" rx="4" fill="#16140f" stroke="#6fae78" stroke-width="1.5"/>
+<text x="810.56" y="1108" text-anchor="start"><tspan fill="#d8d0c2" font-size="12" font-weight="400">conservé</tspan></text>
+</svg>

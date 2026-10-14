@@ -1,0 +1,29 @@
+# Défi 18 : durcissement (non root, capabilities, système de fichiers en lecture seule, limites de débit, NetworkPolicy complètes, Secrets).
+
+helm upgrade --install cinetint ../helm/cinetint -n u-XXX \
+  -f ../helm/cinetint/values-cours.yaml -f values-defi18.yaml \
+  --set images.registre=ghcr.io/eldertek \
+  --set ingress.host=django.MONGROUPE.csc8567.luxbulb.org \
+  --timeout 10m
+
+# 1. contexte de sécurité des Pods, preuve dans un conteneur
+N=u-XXX ../outils/demo-securite.sh
+kubectl exec deploy/back -n u-XXX -- sh -c 'id; touch /app/essai; touch /tmp/essai && echo ecriture tmp ok; grep -E "^Cap(Eff|Bnd)" /proc/1/status; grep NoNewPrivs /proc/1/status'
+
+# 2. NetworkPolicy : matrice d'accès entre composants (Pods d'essai étiquetés)
+kubectl get networkpolicy -n u-XXX
+N=u-XXX ../outils/test-networkpolicy.sh
+
+# 3. limites de débit de l'Ingress : 400 requêtes en 40 connexions ; les excès reçoivent HTTP 503
+kubectl get ingress -n u-XXX -o jsonpath='{.items[*].metadata.annotations}'
+seq 1 400 | xargs -P 40 -I{} curl -s -o /dev/null -w '%{http_code}\n' https://django.MONGROUPE.csc8567.luxbulb.org/api/sante | sort | uniq -c
+# corps trop volumineux : HTTP 413
+head -c 2000000 /dev/zero | curl -s -o /dev/null -w '%{http_code}\n' -H 'Content-Type: application/json' --data-binary @- https://django.MONGROUPE.csc8567.luxbulb.org/api/commandes
+
+# 4. les mots de passe sont des Secrets générés
+kubectl get secret cinetint-secrets cinetint-cle -n u-XXX
+kubectl get secret cinetint-secrets -n u-XXX -o jsonpath='{.data.GERANT_MOT_DE_PASSE}' | base64 -d; echo
+
+# 5. le site fonctionne avec tout le durcissement
+python3 ../outils/parcours.py https://django.MONGROUPE.csc8567.luxbulb.org \
+  --controleur "$(kubectl get secret cinetint-secrets -n u-XXX -o jsonpath='{.data.CONTROLEUR_MOT_DE_PASSE}' | base64 -d)"

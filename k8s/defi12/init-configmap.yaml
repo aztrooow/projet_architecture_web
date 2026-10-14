@@ -1,0 +1,20 @@
+# Script exécuté UNE seule fois par l'image PostgreSQL, à la toute première création du primaire
+# (tout fichier de /docker-entrypoint-initdb.d est lancé après initdb) :
+#   1. création du compte de réplication, qui a le droit REPLICATION et aucun autre ;
+#   2. autorisation de ce compte à se connecter « en réplication » dans pg_hba.conf.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  labels:
+    app: postgres
+data:
+  10-replication.sh: |
+    #!/bin/sh
+    set -e
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname postgres <<-EOSQL
+      CREATE ROLE ${REPLICATION_USER} WITH REPLICATION LOGIN PASSWORD '${REPLICATION_PASSWORD}';
+    EOSQL
+    # le mot-clé « replication » n'est pas couvert par « all » dans pg_hba.conf : ligne dédiée
+    echo "host replication ${REPLICATION_USER} all scram-sha-256" >> "$PGDATA/pg_hba.conf"
+    echo "[primaire] compte de réplication ${REPLICATION_USER} créé"

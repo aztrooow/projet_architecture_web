@@ -1,0 +1,44 @@
+# Défi 12 : brancher l'application sur la base en réplication écrite à la main (facultatif, pour la démonstration).
+# La charte ne déploie pas PostgreSQL (mode externe) : le back se connecte au Service « postgres » du primaire
+# créé par les manifests de ce dossier. Le mot de passe est celui du Secret postgres-secrets :
+#   --set postgres.motDePasse="$(kubectl get secret postgres-secrets -n u-XXX -o jsonpath='{.data.POSTGRES_PASSWORD}' | base64 -d)"
+global:
+  securite: false
+
+postgres:
+  mode: externe
+  externe:
+    hote: postgres
+
+postgres-replication:
+  enabled: false
+
+sondes:
+  startup: {enabled: true}
+  readiness: {enabled: true}
+  liveness: {enabled: true}
+
+hpa:
+  enabled: false
+
+networkPolicies:
+  postgres:
+    enabled: false
+  applicatives:
+    enabled: false
+
+ingress:
+  limites:
+    enabled: false
+
+hooks:
+  configMap:
+    enabled: false
+  sauvegarde:
+    enabled: false
+  testFumee:
+    enabled: false
+
+sauvegardes:
+  enabled: false
+  planifiee: false

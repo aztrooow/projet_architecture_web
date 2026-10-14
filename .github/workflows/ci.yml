@@ -1,0 +1,221 @@
+# Défi 19 : intégration continue de CinetINT.
+#
+# Rien n'est publié tant que tout n'est pas vert. L'ordre des portes de qualité :
+#
+#   tests ──────────┐
+#   charte (Helm) ──┴─► cluster (kind éphémère : install, helm test, parcours complet,
+#                                 mise à jour progressive sans erreur) ─► publier (ghcr.io) ─► deploiement (manuel)
+#
+#   tests      les quatre suites (back avec vraie base PostgreSQL et Redis, qr-generator, qr-verifier, front)
+#   charte     helm lint de la charte avec chaque jeu de valeurs des défis, puis validation des manifests rendus
+#   cluster    cluster kind jetable (Calico, ingress-nginx, metrics-server), installation de la charte,
+#              helm test, parcours spectateur + contrôleur par l'Ingress, redémarrage progressif sous charge d'écriture
+#   publier    construction et envoi des quatre images sur ghcr.io, uniquement sur main ou sur un tag v*
+#   deploiement  facultatif et manuel : mise à jour du cluster du cours (secret KUBECONFIG_COURS)
+name: CI CinetINT
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      deployer:
+        description: "Publier les images puis mettre à jour le cluster du cours (secret KUBECONFIG_COURS, variables NAMESPACE_COURS et HOTE_COURS)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# une nouvelle poussée annule l'exécution précédente de la même branche
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HELM_VERSION: v4.3.0
+  KUBECONFORM_VERSION: v0.8.0
+
+jobs:
+  tests:
+    name: tests ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [back, qr-generator, qr-verifier, front]
+    steps:
+      - uses: actions/checkout@v7
+      # les mêmes commandes que dans le README : le profil « tests » de docker-compose.yml
+      - name: Tests de ${{ matrix.service }}
+        run: docker compose -p cinetint-ci --profile tests run --rm --build ${{ matrix.service }}-tests
+      - name: Nettoyage
+        if: always()
+        run: docker compose -p cinetint-ci --profile tests down -v
+
+  charte:
+    name: charte Helm
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: helm lint avec chaque jeu de valeurs
+        run: |
+          set -euo pipefail
+          charte=k8s/helm/cinetint
+          helm lint "$charte" -f "$charte/values-kind.yaml"
+          helm lint "$charte" -f "$charte/values-cours.yaml"
+          for valeurs in k8s/defi*/values-defi*.yaml; do
+            echo "== $valeurs"
+            helm lint "$charte" -f "$charte/values-kind.yaml" -f "$valeurs"
+          done
+          helm lint "$charte" -f "$charte/values-kind.yaml" --set postgres-replication.enabled=true
+      - name: Manifests rendus conformes à l'API Kubernetes (kubeconform)
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar -xz kubeconform
+          charte=k8s/helm/cinetint
+          for valeurs in "" k8s/defi6/values-defi6.yaml k8s/defi7/values-defi7.yaml k8s/defi13/values-defi13.yaml k8s/defi18/values-defi18.yaml; do
+            args=(-f "$charte/values-kind.yaml")
+            [ -n "$valeurs" ] && args+=(-f "$valeurs")
+            helm template cinetint "$charte" "${args[@]}" | ./kubeconform -strict -summary -ignore-missing-schemas
+          done
+          for dossier in k8s/defi2 k8s/defi3 k8s/defi4 k8s/defi5 k8s/defi12; do
+            for f in "$dossier"/*.yaml; do
+              case "$f" in */values*|*/restaurer*) continue ;; esac
+              cat "$f"
+              echo "---"
+            done | sed -e 's#REGISTRE_IMAGES#registre#g' -e 's#HOTE_SITE#cinetint.test#g' | ./kubeconform -strict -summary -ignore-missing-schemas
+          done
+
+  cluster:
+    name: cluster kind (installation, parcours, mise à jour)
+    needs: [tests, charte]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
+        with:
+          version: ${{ env.HELM_VERSION }}
+      # installe seulement kind et kubectl : le cluster est créé par notre script (Calico à la place de kindnet)
+      - uses: helm/kind-action@v1.15.1
+        with:
+          install_only: true
+      - name: Cluster kind jetable
+        run: k8s/outils/kind-creer.sh cinetint
+      - name: Images de la version testée
+        run: |
+          REGISTRE=cinetint-local TAG=ci k8s/images.sh construire
+          REGISTRE=cinetint-local TAG=ci k8s/images.sh kind
+      - name: Installation de la charte (état final du Défi 18)
+        run: |
+          kubectl create namespace u-ci
+          charte=k8s/helm/cinetint
+          helm upgrade --install cinetint "$charte" -n u-ci \
+            -f "$charte/values-kind.yaml" -f k8s/defi18/values-defi18.yaml \
+            --set images.tags.front=ci --set images.tags.back=ci \
+            --set images.tags.qrGenerator=ci --set images.tags.qrVerifier=ci \
+            --timeout 10m
+      - name: helm test (sondes des quatre services)
+        run: helm test cinetint -n u-ci --timeout 5m
+      - name: Parcours complet par l'Ingress (achat, QR code, contrôle, /internal fermé)
+        run: |
+          python3 k8s/outils/parcours.py http://localhost:8080 --hote cinetint.test --attente 120 \
+            --controleur "$(kubectl get secret cinetint-secrets -n u-ci -o jsonpath='{.data.CONTROLEUR_MOT_DE_PASSE}' | base64 -d)"
+      - name: Mise à jour progressive sans erreur (écritures en continu pendant le redémarrage)
+        run: |
+          python3 k8s/defi20/ecritures.py http://localhost:8080 --hote cinetint.test --duree 90 &
+          ecritures=$!
+          sleep 5
+          kubectl rollout restart deployment/front deployment/back -n u-ci
+          kubectl rollout status deployment/front -n u-ci --timeout=300s
+          kubectl rollout status deployment/back -n u-ci --timeout=300s
+          wait "$ecritures"
+      - name: Isolation réseau (le front ne joint pas la base)
+        run: |
+          kubectl run sonde-front -n u-ci --image=postgres:17-alpine --restart=Never \
+            --labels=app.kubernetes.io/instance=cinetint,app.kubernetes.io/component=front \
+            --command -- sh -c 'nc -z -w 4 postgres 5432 && echo OUVERT || echo FERME'
+          kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/sonde-front -n u-ci --timeout=120s
+          test "$(kubectl logs sonde-front -n u-ci)" = "FERME"
+      - name: Diagnostic en cas d'échec
+        if: failure()
+        run: |
+          kubectl get pods,svc,ingress,pvc,hpa -n u-ci -o wide || true
+          kubectl get events -n u-ci --sort-by=.lastTimestamp | tail -40 || true
+          for p in $(kubectl get pods -n u-ci -o name); do echo "=== $p"; kubectl logs "$p" -n u-ci --all-containers --tail=30 || true; done
+      - name: Suppression du cluster
+        if: always()
+        run: k8s/outils/kind-creer.sh cinetint supprimer || true
+
+  publier:
+    name: publication des images (ghcr.io)
+    needs: [cluster]
+    # seulement après un push sur main ou sur un tag, ou à la demande avec "deployer"
+    if: >-
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')))
+      || (github.event_name == 'workflow_dispatch' && inputs.deployer)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      registre: ${{ steps.nom.outputs.registre }}
+      tag: ${{ steps.nom.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Nom du registre et de la version
+        id: nom
+        run: |
+          echo "registre=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Construction et envoi des quatre images
+        run: REGISTRE="${{ steps.nom.outputs.registre }}" TAG="${{ steps.nom.outputs.tag }}" k8s/images.sh tout
+
+  deploiement:
+    name: mise à jour du cluster du cours (manuelle)
+    needs: [publier]
+    if: github.event_name == 'workflow_dispatch' && inputs.deployer
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # un environnement « cours » peut exiger une approbation avant ce job (Settings, Environments)
+    environment: cours
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: Mise à jour de la charte
+        env:
+          KUBECONFIG_COURS: ${{ secrets.KUBECONFIG_COURS }}
+        run: |
+          set -euo pipefail
+          install -m 600 /dev/null "$RUNNER_TEMP/kubeconfig"
+          printf '%s' "$KUBECONFIG_COURS" > "$RUNNER_TEMP/kubeconfig"
+          export KUBECONFIG="$RUNNER_TEMP/kubeconfig"
+          charte=k8s/helm/cinetint
+          tag='${{ needs.publier.outputs.tag }}'
+          helm upgrade --install cinetint "$charte" -n '${{ vars.NAMESPACE_COURS }}' \
+            -f "$charte/values-cours.yaml" -f k8s/defi18/values-defi18.yaml \
+            --set images.registre='${{ needs.publier.outputs.registre }}' \
+            --set images.tags.front="$tag" --set images.tags.back="$tag" \
+            --set images.tags.qrGenerator="$tag" --set images.tags.qrVerifier="$tag" \
+            --set ingress.host='${{ vars.HOTE_COURS }}' --timeout 10m
+          helm test cinetint -n '${{ vars.NAMESPACE_COURS }}' --timeout 5m

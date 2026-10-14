@@ -1,0 +1,48 @@
+# qr-verifier : contrôle d'entrée. Ne détient que la clé publique, qu'il demande au qr-generator.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qr-verifier
+  labels:
+    app: qr-verifier
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qr-verifier
+  template:
+    metadata:
+      labels:
+        app: qr-verifier
+    spec:
+      containers:
+        - name: qr-verifier
+          image: REGISTRE_IMAGES/cinetint-qr-verifier:v1
+          ports:
+            - containerPort: 8002
+          env:
+            - {name: BACK_URL, value: "http://back:8000"}
+            - {name: QR_GENERATOR_URL, value: "http://qr-generator:8001"}
+            - name: SERVICE_TOKEN
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: SERVICE_TOKEN}
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: JWT_SECRET}
+          resources:
+            requests: {cpu: 100m, memory: 100Mi}
+            limits: {cpu: 200m, memory: 200Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qr-verifier
+  labels:
+    app: qr-verifier
+spec:
+  type: ClusterIP
+  selector:
+    app: qr-verifier
+  ports:
+    - port: 8002
+      targetPort: 8002

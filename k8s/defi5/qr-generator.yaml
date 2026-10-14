@@ -1,0 +1,53 @@
+# qr-generator : signe les billets (Ed25519), dessine les QR codes et le PDF.
+# La clé privée vient d'un Secret monté en fichier. Elle doit être la MÊME pour toutes les répliques :
+# avec une clé créée par chaque pod au démarrage (comportement par défaut du service), un billet signé
+# par un pod serait refusé par les autres. Création du Secret : appliquer.sh secrets.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qr-generator
+  labels:
+    app: qr-generator
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qr-generator
+  template:
+    metadata:
+      labels:
+        app: qr-generator
+    spec:
+      containers:
+        - name: qr-generator
+          image: REGISTRE_IMAGES/cinetint-qr-generator:v1
+          ports:
+            - containerPort: 8001
+          env:
+            - {name: CLE_PRIVEE_FICHIER, value: /cles/cle-ed25519.pem}
+            - name: SERVICE_TOKEN
+              valueFrom:
+                secretKeyRef: {name: cinetint-secrets, key: SERVICE_TOKEN}
+          volumeMounts:
+            - {name: cle, mountPath: /cles, readOnly: true}
+          resources:
+            requests: {cpu: 100m, memory: 100Mi}
+            limits: {cpu: 200m, memory: 200Mi}
+      volumes:
+        - name: cle
+          secret:
+            secretName: cinetint-cle
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qr-generator
+  labels:
+    app: qr-generator
+spec:
+  type: ClusterIP
+  selector:
+    app: qr-generator
+  ports:
+    - port: 8001
+      targetPort: 8001
