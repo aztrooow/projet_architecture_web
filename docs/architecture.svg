@@ -32,7 +32,7 @@
 
   <!-- reverse proxy -->
   <rect x="50" y="174" width="1100" height="82" rx="10" fill="#16140f" stroke="#3a342a"/>
-  <text x="70" y="200"><tspan fill="#f3ebdd" font-size="17" font-weight="600">nginx</tspan><tspan dx="14" fill="#a39c90" font-size="13">TLS Let's Encrypt, routage par préfixe (le futur Ingress Kubernetes), /internal n'est jamais exposé</tspan></text>
+  <text x="70" y="200"><tspan fill="#f3ebdd" font-size="17" font-weight="600">nginx</tspan><tspan dx="14" fill="#a39c90" font-size="13">conteneur proxy, routage par préfixe (le futur Ingress), /internal jamais exposé, HTTPS par le nginx du serveur</tspan></text>
   <g font-size="13" fill="#0c0b09" font-weight="600" text-anchor="middle">
     <rect x="127" y="214" width="92" height="28" rx="14" fill="#c0965e"/>
     <text x="173" y="233">/</text>
@@ -166,5 +166,5 @@
     <text x="620" y="794"><tspan fill="#8a8377" font-weight="700">7</tspan>  import de la programmation réelle, toutes les heures</text>
     <text x="620" y="818" fill="#a39c90">Le navigateur reçoit le temps réel en SSE depuis le back.</text>
   </g>
-  <text x="50" y="856" fill="#6b6358" font-size="12">Aujourd'hui : docker compose derrière nginx. Demain : un Deployment par service sous Kubernetes, même découpage.</text>
+  <text x="50" y="856" fill="#6b6358" font-size="12">Aujourd'hui : docker compose, un seul point d'entrée (le conteneur nginx). Demain : un Deployment par service sous Kubernetes, même découpage.</text>
 </svg>

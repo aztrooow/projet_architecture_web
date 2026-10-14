@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1330" width="1600" height="1330" font-family="Verdana, 'DejaVu Sans', 'Segoe UI', Arial, sans-serif">
+<title>Infrastructure Docker de CinetINT</title>
+<defs>
+<marker id="or" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0965e"/></marker>
+<marker id="gris" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8a8377"/></marker>
+</defs>
+<rect width="1600" height="1330" rx="16" fill="#0c0b09"/>
+<text x="50" y="46"><tspan fill="#c0965e" font-size="24" font-weight="600" letter-spacing="3">CINETINT</tspan><tspan dx="16" fill="#a39c90" font-size="15">infrastructure Docker : espaces de noms, cgroups, réseaux, DNS, volumes</tspan></text>
+<rect x="50" y="70" width="360" height="70" rx="10" fill="#16140f" stroke="#3a342a" stroke-width="1.5"/>
+<text x="70" y="98" fill="#f3ebdd" font-size="15" font-weight="700" text-anchor="start">Navigateur ou curl</text>
+<text x="70" y="122" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">http://localhost/  (même origine pour tout)</text>
+<path d="M230,140 L230,212" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#or)"/>
+<text x="246" y="182" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">HTTP, port 80 de l&#x27;hôte</text>
+<rect x="30" y="160" width="1540" height="1120" rx="14" fill="none" stroke="#8a8377" stroke-width="1.2" stroke-dasharray="6 5"/>
+<text x="1550" y="184" fill="#8a8377" font-size="12" font-weight="400" text-anchor="end">HÔTE Linux (poste, WSL ou serveur) : un seul noyau, partagé par tous les conteneurs</text>
+<rect x="50" y="215" width="360" height="100" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+<text x="66" y="240" fill="#f3ebdd" font-size="14" font-weight="700" text-anchor="start">Interface de l&#x27;hôte et NAT</text>
+<text x="66" y="262" fill="#d9b886" font-size="12" font-weight="700" text-anchor="start">127.0.0.1:${PROXY_PORT:-80}</text>
+<text x="66" y="282" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">iptables, chaîne DOCKER :</text>
+<text x="66" y="299" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">DNAT vers 172.22.0.6:80 (le proxy)</text>
+<rect x="440" y="215" width="640" height="100" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+<text x="456" y="240" fill="#f3ebdd" font-size="14" font-weight="700" text-anchor="start">Docker Engine : dockerd, containerd, runc</text>
+<text x="456" y="262" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">pour chaque conteneur, le noyau crée un jeu d&#x27;espaces de noms</text>
+<text x="456" y="280" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">(pid, net, mnt, uts, ipc) qui l&#x27;isole, et un cgroup v2 qui</text>
+<text x="456" y="298" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">plafonne son CPU et sa mémoire (deploy.resources.limits)</text>
+<rect x="1110" y="215" width="440" height="100" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+<text x="1126" y="240" fill="#f3ebdd" font-size="14" font-weight="700" text-anchor="start">Images et couches</text>
+<text x="1126" y="262" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">image = couches en lecture seule (overlay2),</text>
+<text x="1126" y="280" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">chaque conteneur ajoute sa couche d&#x27;écriture</text>
+<text x="1126" y="298" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">éphémère ; seuls les volumes survivent</text>
+<path d="M230,315 L230,352" fill="none" stroke="#c0965e" stroke-width="2" marker-end="url(#or)"/>
+<text x="246" y="340" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">DNAT puis pont front</text>
+<rect x="50" y="356" width="360" height="196" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+<text y="382"><tspan x="66" fill="#f3ebdd" font-size="16" font-weight="700">proxy</tspan><tspan x="396" fill="#a39c90" font-size="11" text-anchor="end">nginx:1.30.5-alpine</tspan></text>
+<path d="M50,394 L410,394" stroke="#3a342a"/>
+<text x="66" y="418" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">espaces de noms : net pid mnt uts ipc</text>
+<text x="66" y="440" fill="#f3ebdd" font-size="12" font-weight="400" text-anchor="start">processus : nginx, port 80</text>
+<text x="66" y="462" fill="#d9b886" font-size="12" font-weight="400" text-anchor="start">eth0 172.22.0.6/16 (réseau front)</text>
+<text x="66" y="484" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">DNS 127.0.0.11 : front, back, qr-*</text>
+<text x="66" y="506" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">cgroup : 0,25 CPU, 64 Mio</text>
+<text x="66" y="528" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">bind mount : nginx.conf (lecture seule)</text>
+<rect x="430" y="356" width="360" height="196" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+<text y="382"><tspan x="446" fill="#f3ebdd" font-size="16" font-weight="700">front</tspan><tspan x="776" fill="#a39c90" font-size="11" text-anchor="end">python:3.13-slim</tspan></text>
+<path d="M430,394 L790,394" stroke="#3a342a"/>
+<text x="446" y="418" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">espaces de noms : net pid mnt uts ipc</text>
+<text x="446" y="440" fill="#f3ebdd" font-size="12" font-weight="400" text-anchor="start">processus : uvicorn, port 8080</text>
+<text x="446" y="462" fill="#d9b886" font-size="12" font-weight="400" text-anchor="start">eth0 172.22.0.5/16 (réseau front)</text>
+<text x="446" y="484" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">DNS 127.0.0.11 : back</text>
+<text x="446" y="506" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">cgroup : 0,5 CPU, 256 Mio</text>
+<text x="446" y="528" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">image multi-étapes : node (build) puis python</text>
+<rect x="810" y="356" width="360" height="196" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+<text y="382"><tspan x="826" fill="#f3ebdd" font-size="16" font-weight="700">qr-generator</tspan><tspan x="1156" fill="#a39c90" font-size="11" text-anchor="end">python:3.13-slim</tspan></text>
+<path d="M810,394 L1170,394" stroke="#3a342a"/>
+<text x="826" y="418" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">espaces de noms : net pid mnt uts ipc</text>
+<text x="826" y="440" fill="#f3ebdd" font-size="12" font-weight="400" text-anchor="start">processus : uvicorn, port 8001</text>
+<text x="826" y="462" fill="#d9b886" font-size="12" font-weight="400" text-anchor="start">eth0 172.22.0.2/16 (réseau front)</text>
+<text x="826" y="484" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">détient la clé privée Ed25519</text>
+<text x="826" y="506" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">cgroup : 0,5 CPU, 256 Mio</text>
+<text x="826" y="528" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">volume cles monté sur /data</text>
+<rect x="1190" y="356" width="360" height="196" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+<text y="382"><tspan x="1206" fill="#f3ebdd" font-size="16" font-weight="700">qr-verifier</tspan><tspan x="1536" fill="#a39c90" font-size="11" text-anchor="end">python:3.13-slim</tspan></text>
+<path d="M1190,394 L1550,394" stroke="#3a342a"/>
+<text x="1206" y="418" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">espaces de noms : net pid mnt uts ipc</text>
+<text x="1206" y="440" fill="#f3ebdd" font-size="12" font-weight="400" text-anchor="start">processus : uvicorn, port 8002</text>
+<text x="1206" y="462" fill="#d9b886" font-size="12" font-weight="400" text-anchor="start">eth0 172.22.0.4/16 (réseau front)</text>
+<text x="1206" y="484" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">DNS 127.0.0.11 : back, qr-generator</text>
+<text x="1206" y="506" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">cgroup : 0,25 CPU, 128 Mio</text>
+<text x="1206" y="528" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">aucun volume, clé publique seulement</text>
+<rect x="50" y="636" width="1500" height="52" rx="10" fill="#201d17" stroke="#c0965e" stroke-width="2"/>
+<text y="658"><tspan x="68" fill="#f3ebdd" font-size="14" font-weight="700">Réseau Docker « front »</tspan><tspan x="300" fill="#d9b886" font-size="12">pont Linux br-… (couche 2, commutateur virtuel)</tspan><tspan x="1532" fill="#a39c90" font-size="12" text-anchor="end">sous-réseau 172.22.0.0/16, passerelle 172.22.0.1</tspan></text>
+<text y="678"><tspan x="68" fill="#a39c90" font-size="11">Le pont fait aussi office de routeur : MASQUERADE vers l'extérieur (le back lit la programmation du CGR sur Internet).</tspan></text>
+<path d="M230,552 L230,636" fill="none" stroke="#c0965e" stroke-width="2"/>
+<circle cx="230" cy="552" r="5" fill="#c0965e" stroke="#0c0b09" stroke-width="1.5"/>
+<circle cx="230" cy="636" r="5" fill="#c0965e" stroke="#0c0b09" stroke-width="1.5"/>
+<text x="242" y="574" fill="#d9b886" font-size="11" font-weight="400" text-anchor="start">eth0</text>
+<text x="242" y="624" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">veth (côté hôte)</text>
+<path d="M610,552 L610,636" fill="none" stroke="#c0965e" stroke-width="2"/>
+<circle cx="610" cy="552" r="5" fill="#c0965e" stroke="#0c0b09" stroke-width="1.5"/>
+<circle cx="610" cy="636" r="5" fill="#c0965e" stroke="#0c0b09" stroke-width="1.5"/>
+<text x="622" y="574" fill="#d9b886" font-size="11" font-weight="400" text-anchor="start">eth0</text>
+<text x="622" y="624" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">veth (côté hôte)</text>
+<path d="M990,552 L990,636" fill="none" stroke="#c0965e" stroke-width="2"/>
+<circle cx="990" cy="552" r="5" fill="#c0965e" stroke="#0c0b09" stroke-width="1.5"/>
+<circle cx="990" cy="636" r="5" fill="#c0965e" stroke="#0c0b09" stroke-width="1.5"/>
+<text x="1002" y="574" fill="#d9b886" font-size="11" font-weight="400" text-anchor="start">eth0</text>
+<text x="1002" y="624" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">veth (côté hôte)</text>
+<path d="M1370,552 L1370,636" fill="none" stroke="#c0965e" stroke-width="2"/>
+<circle cx="1370" cy="552" r="5" fill="#c0965e" stroke="#0c0b09" stroke-width="1.5"/>
+<circle cx="1370" cy="636" r="5" fill="#c0965e" stroke="#0c0b09" stroke-width="1.5"/>
+<text x="1382" y="574" fill="#d9b886" font-size="11" font-weight="400" text-anchor="start">eth0</text>
+<text x="1382" y="624" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">veth (côté hôte)</text>
+<rect x="50" y="738" width="620" height="214" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+<text y="764"><tspan x="66" fill="#f3ebdd" font-size="16" font-weight="700">back</tspan><tspan x="656" fill="#a39c90" font-size="11" text-anchor="end">python:3.13-slim</tspan></text>
+<path d="M50,776 L670,776" stroke="#3a342a"/>
+<text x="66" y="800" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">espaces de noms : net pid mnt uts ipc</text>
+<text x="66" y="822" fill="#f3ebdd" font-size="12" font-weight="400" text-anchor="start">entrypoint.sh : migrations Alembic, fixtures, uvicorn :8000</text>
+<text x="66" y="844" fill="#d9b886" font-size="12" font-weight="400" text-anchor="start">eth0 172.22.0.3/16 (réseau front, veth vers br-front)</text>
+<text x="66" y="866" fill="#d8d0c2" font-size="12" font-weight="400" text-anchor="start">eth1 172.21.0.4/16 (réseau back, veth vers br-back)</text>
+<text x="66" y="888" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">DNS 127.0.0.11 : qr-generator, postgres, redis</text>
+<text x="66" y="910" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">cgroup : 1 CPU, 768 Mio</text>
+<text x="66" y="932" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">plusieurs répliques possibles : verrou pg_advisory_lock</text>
+<path d="M200,688 L200,738" fill="none" stroke="#c0965e" stroke-width="2"/>
+<circle cx="200" cy="688" r="5" fill="#c0965e" stroke="#0c0b09" stroke-width="1.5"/>
+<circle cx="200" cy="738" r="5" fill="#c0965e" stroke="#0c0b09" stroke-width="1.5"/>
+<text x="212" y="710" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">veth</text>
+<rect x="50" y="1014" width="1500" height="52" rx="10" fill="#201d17" stroke="#d8d0c2" stroke-width="2"/>
+<text y="1036"><tspan x="68" fill="#f3ebdd" font-size="14" font-weight="700">Réseau Docker « back »</tspan><tspan x="300" fill="#d8d0c2" font-size="12">pont Linux br-… (aucun port publié, non joignable de l'hôte)</tspan><tspan x="1532" fill="#a39c90" font-size="12" text-anchor="end">sous-réseau 172.21.0.0/16, passerelle 172.21.0.1</tspan></text>
+<text y="1056"><tspan x="68" fill="#a39c90" font-size="11">Seuls back, PostgreSQL et Redis y sont raccordés : proxy, front et services QR ne voient pas la base.</tspan></text>
+<path d="M520,952 L520,1014" fill="none" stroke="#d8d0c2" stroke-width="2"/>
+<circle cx="520" cy="952" r="5" fill="#d8d0c2" stroke="#0c0b09" stroke-width="1.5"/>
+<circle cx="520" cy="1014" r="5" fill="#d8d0c2" stroke="#0c0b09" stroke-width="1.5"/>
+<text x="532" y="974" fill="#d8d0c2" font-size="11" font-weight="400" text-anchor="start">eth1</text>
+<text x="532" y="1002" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">veth</text>
+<rect x="700" y="738" width="850" height="214" rx="10" fill="#0c0b09" stroke="#3a342a" stroke-width="1.5"/>
+<text x="718" y="764" fill="#f3ebdd" font-size="13" font-weight="700" text-anchor="start">Qui appelle qui (noms résolus par le DNS interne de Docker, 127.0.0.11)</text>
+<text y="790"><tspan x="718" fill="#d9b886" font-size="12" font-weight="700">navigateur</tspan><tspan x="812" fill="#8a8377" font-size="12">→</tspan><tspan x="834" fill="#f3ebdd" font-size="12">proxy:80 (via NAT)</tspan><tspan x="1130" fill="#a39c90" font-size="11">tout passe par l&#x27;URL, un seul point d&#x27;entrée</tspan></text>
+<text y="812"><tspan x="718" fill="#d9b886" font-size="12" font-weight="700">proxy</tspan><tspan x="812" fill="#8a8377" font-size="12">→</tspan><tspan x="834" fill="#f3ebdd" font-size="12">front:8080, back:8000</tspan><tspan x="1130" fill="#a39c90" font-size="11">/ et /admin vers front, /api vers back (SSE)</tspan></text>
+<text y="834"><tspan x="718" fill="#d9b886" font-size="12" font-weight="700">proxy</tspan><tspan x="812" fill="#8a8377" font-size="12">→</tspan><tspan x="834" fill="#f3ebdd" font-size="12">qr-generator:8001, qr-verifier:8002</tspan><tspan x="1130" fill="#a39c90" font-size="11">/qr et /verification ; /internal : 404</tspan></text>
+<text y="856"><tspan x="718" fill="#d9b886" font-size="12" font-weight="700">front</tspan><tspan x="812" fill="#8a8377" font-size="12">→</tspan><tspan x="834" fill="#f3ebdd" font-size="12">back:8000</tspan><tspan x="1130" fill="#a39c90" font-size="11">rendu serveur de l&#x27;accueil, de /infos, des fiches</tspan></text>
+<text y="878"><tspan x="718" fill="#d9b886" font-size="12" font-weight="700">back</tspan><tspan x="812" fill="#8a8377" font-size="12">→</tspan><tspan x="834" fill="#f3ebdd" font-size="12">qr-generator:8001</tspan><tspan x="1130" fill="#a39c90" font-size="11">signature des billets, PDF</tspan></text>
+<text y="900"><tspan x="718" fill="#d9b886" font-size="12" font-weight="700">qr-verifier</tspan><tspan x="812" fill="#8a8377" font-size="12">→</tspan><tspan x="834" fill="#f3ebdd" font-size="12">back:8000, qr-generator:8001</tspan><tspan x="1130" fill="#a39c90" font-size="11">passage du billet à « utilisé », clé publique</tspan></text>
+<text y="922"><tspan x="718" fill="#d9b886" font-size="12" font-weight="700">back</tspan><tspan x="812" fill="#8a8377" font-size="12">→</tspan><tspan x="834" fill="#f3ebdd" font-size="12">postgres:5432, redis:6379</tspan><tspan x="1130" fill="#a39c90" font-size="11">sur le réseau back uniquement</tspan></text>
+<rect x="50" y="1112" width="400" height="140" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+<text y="1138"><tspan x="66" fill="#f3ebdd" font-size="16" font-weight="700">redis</tspan><tspan x="436" fill="#a39c90" font-size="11" text-anchor="end">redis:8-alpine</tspan></text>
+<path d="M50,1150 L450,1150" stroke="#3a342a"/>
+<text x="66" y="1174" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">espaces de noms : net pid mnt uts ipc</text>
+<text x="66" y="1196" fill="#d8d0c2" font-size="12" font-weight="400" text-anchor="start">eth0 172.21.0.3/16 (réseau back)</text>
+<text x="66" y="1218" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">cgroup : 0,25 CPU, 128 Mio</text>
+<text x="66" y="1240" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">compteurs, verrous à expiration, pub/sub</text>
+<rect x="480" y="1112" width="540" height="140" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+<text y="1138"><tspan x="496" fill="#f3ebdd" font-size="16" font-weight="700">postgres</tspan><tspan x="1006" fill="#a39c90" font-size="11" text-anchor="end">postgres:17-alpine</tspan></text>
+<path d="M480,1150 L1020,1150" stroke="#3a342a"/>
+<text x="496" y="1174" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">espaces de noms : net pid mnt uts ipc</text>
+<text x="496" y="1196" fill="#d8d0c2" font-size="12" font-weight="400" text-anchor="start">eth0 172.21.0.2/16 (réseau back), port 5432</text>
+<text x="496" y="1218" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">cgroup : 1 CPU, 512 Mio</text>
+<text x="496" y="1240" fill="#a39c90" font-size="12" font-weight="400" text-anchor="start">volume postgres monté sur /var/lib/postgresql/data</text>
+<path d="M250,1066 L250,1112" fill="none" stroke="#d8d0c2" stroke-width="2"/>
+<circle cx="250" cy="1066" r="5" fill="#d8d0c2" stroke="#0c0b09" stroke-width="1.5"/>
+<circle cx="250" cy="1112" r="5" fill="#d8d0c2" stroke="#0c0b09" stroke-width="1.5"/>
+<text x="262" y="1090" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">veth</text>
+<text x="262" y="1104" fill="#d8d0c2" font-size="11" font-weight="400" text-anchor="start">eth0</text>
+<path d="M750,1066 L750,1112" fill="none" stroke="#d8d0c2" stroke-width="2"/>
+<circle cx="750" cy="1066" r="5" fill="#d8d0c2" stroke="#0c0b09" stroke-width="1.5"/>
+<circle cx="750" cy="1112" r="5" fill="#d8d0c2" stroke="#0c0b09" stroke-width="1.5"/>
+<text x="762" y="1090" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">veth</text>
+<text x="762" y="1104" fill="#d8d0c2" font-size="11" font-weight="400" text-anchor="start">eth0</text>
+<rect x="1050" y="1112" width="500" height="140" rx="10" fill="#16140f" stroke="#8a8377" stroke-width="1.5" stroke-dasharray="6 5"/>
+<text x="1066" y="1138" fill="#f3ebdd" font-size="14" font-weight="700" text-anchor="start">Stockage de l&#x27;hôte : volumes nommés</text>
+<text x="1066" y="1162" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">postgres : données de la base, survivent à</text>
+<text x="1066" y="1179" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">docker compose down (supprimé par down -v)</text>
+<text x="1066" y="1202" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">cles : clé privée Ed25519, montée sur /data</text>
+<text x="1066" y="1219" fill="#a39c90" font-size="11" font-weight="400" text-anchor="start">du qr-generator, créée au premier démarrage</text>
+<text x="1066" y="1240" fill="#d9b886" font-size="11" font-weight="400" text-anchor="start">/var/lib/docker/volumes/&lt;nom&gt;/_data</text>
+<path d="M1020,1182 L1050,1182" fill="none" stroke="#8a8377" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#gris)"/>
+<text x="50" y="1306" fill="#8a8377" font-size="11">Adresses IP et noms de ponts relevés sur un lancement (docker network inspect) : Docker les attribue, les noms de services (DNS interne) restent stables. Port publié : 127.0.0.1:${PROXY_PORT:-80}:80, seule entrée de la pile.</text>
+</svg>

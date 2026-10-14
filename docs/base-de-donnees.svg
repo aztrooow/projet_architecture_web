@@ -1,0 +1,273 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2062 1677" width="2062" height="1677" font-family="Verdana, 'DejaVu Sans', 'Segoe UI', Arial, sans-serif">
+  <title>Schéma de la base de données de CinetINT</title>
+  <defs>
+    <marker id="fin" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0965e"/></marker>
+  </defs>
+  <rect width="2062" height="1677" rx="16" fill="#0c0b09"/>
+  <text x="26" y="46"><tspan fill="#c0965e" font-size="24" font-weight="600" letter-spacing="3">CINETINT</tspan><tspan dx="16" fill="#a39c90" font-size="15">schéma de la base de données PostgreSQL 17, 12 tables, généré depuis app/models.py</tspan></text>
+  <text x="26" y="70" fill="#8a8377" font-size="12">Chaque flèche part de la clé étrangère (N) et pointe la clé primaire référencée (1). La règle ON DELETE de chaque clé étrangère est rappelée sous la table qui la porte.</text>
+  <path d="M136,854 L136,566" fill="none" stroke="#c0965e" stroke-width="1.6" marker-end="url(#fin)"/>
+  <text x="143" y="846" fill="#d9b886" font-size="10.5" text-anchor="start">N</text>
+  <text x="143" y="582" fill="#d9b886" font-size="10.5" text-anchor="start">1</text>
+  <path d="M576,546 L459,546 L459,504 L386,504" fill="none" stroke="#c0965e" stroke-width="1.6" marker-end="url(#fin)"/>
+  <text x="570" y="540" fill="#d9b886" font-size="10.5" text-anchor="end">N</text>
+  <text x="394" y="498" fill="#d9b886" font-size="10.5" text-anchor="start">1</text>
+  <path d="M576,266 L481,266 L481,140 L386,140" fill="none" stroke="#c0965e" stroke-width="1.6" marker-end="url(#fin)"/>
+  <text x="570" y="260" fill="#d9b886" font-size="10.5" text-anchor="end">N</text>
+  <text x="394" y="134" fill="#d9b886" font-size="10.5" text-anchor="start">1</text>
+  <path d="M936,288 L1023,288 L1023,140 L1126,140" fill="none" stroke="#c0965e" stroke-width="1.6" marker-end="url(#fin)"/>
+  <text x="944" y="282" fill="#d9b886" font-size="10.5" text-anchor="start">N</text>
+  <text x="1120" y="134" fill="#d9b886" font-size="10.5" text-anchor="end">1</text>
+  <path d="M936,524 L997,524 L997,504 L1126,504" fill="none" stroke="#c0965e" stroke-width="1.6" marker-end="url(#fin)"/>
+  <text x="944" y="518" fill="#d9b886" font-size="10.5" text-anchor="start">N</text>
+  <text x="1120" y="498" fill="#d9b886" font-size="10.5" text-anchor="end">1</text>
+  <path d="M936,608 L1061,608 L1061,414 L1336,414 L1336,203" fill="none" stroke="#c0965e" stroke-width="1.6" marker-end="url(#fin)"/>
+  <text x="944" y="602" fill="#d9b886" font-size="10.5" text-anchor="start">N</text>
+  <text x="1343" y="219" fill="#d9b886" font-size="10.5" text-anchor="start">1</text>
+  <path d="M1326,854 L1326,823 L836,823 L836,744" fill="none" stroke="#c0965e" stroke-width="1.6" marker-end="url(#fin)"/>
+  <text x="1333" y="846" fill="#d9b886" font-size="10.5" text-anchor="start">N</text>
+  <text x="843" y="760" fill="#d9b886" font-size="10.5" text-anchor="start">1</text>
+  <path d="M936,920 L1081,920 L1081,898 L1126,898" fill="none" stroke="#c0965e" stroke-width="1.6" marker-end="url(#fin)"/>
+  <text x="944" y="914" fill="#d9b886" font-size="10.5" text-anchor="start">N</text>
+  <text x="1120" y="892" fill="#d9b886" font-size="10.5" text-anchor="end">1</text>
+  <path d="M576,962 L481,962 L481,898 L386,898" fill="none" stroke="#c0965e" stroke-width="1.6" marker-end="url(#fin)"/>
+  <text x="570" y="956" fill="#d9b886" font-size="10.5" text-anchor="end">N</text>
+  <text x="394" y="892" fill="#d9b886" font-size="10.5" text-anchor="start">1</text>
+  <path d="M696,854 L696,744" fill="none" stroke="#c0965e" stroke-width="1.6" marker-end="url(#fin)"/>
+  <text x="703" y="846" fill="#d9b886" font-size="10.5" text-anchor="start">N</text>
+  <text x="703" y="760" fill="#d9b886" font-size="10.5" text-anchor="start">1</text>
+  <path d="M696,1406 L696,1328" fill="none" stroke="#c0965e" stroke-width="1.6" marker-end="url(#fin)"/>
+  <text x="703" y="1398" fill="#d9b886" font-size="10.5" text-anchor="start">N</text>
+  <text x="703" y="1344" fill="#d9b886" font-size="10.5" text-anchor="start">1</text>
+  <g>
+    <rect x="26" y="96" width="360" height="128" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <path d="M26,130 L386,130" stroke="#3a342a"/>
+    <text x="42" y="119" fill="#f3ebdd" font-size="15" font-weight="700">categories</text>
+    <text x="372" y="119" fill="#8a8377" font-size="11" text-anchor="end">4 colonnes</text>
+    <text y="145" font-size="12"><tspan x="42" fill="#c0965e" font-weight="700">code</tspan><tspan x="194" fill="#a39c90">VARCHAR(20)</tspan><tspan x="372" fill="#c0965e" font-size="10.5" text-anchor="end">PK</tspan></text>
+    <rect x="27" y="151" width="358" height="21" fill="#1b1812"/>
+    <text y="166" font-size="12"><tspan x="42" fill="#f3ebdd" font-weight="400">libelle</tspan><tspan x="194" fill="#a39c90">VARCHAR(60)</tspan><tspan x="372" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="187" font-size="12"><tspan x="42" fill="#f3ebdd" font-weight="400">ordre</tspan><tspan x="194" fill="#a39c90">INTEGER</tspan><tspan x="372" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="27" y="193" width="358" height="21" fill="#1b1812"/>
+    <text y="208" font-size="12"><tspan x="42" fill="#f3ebdd" font-weight="400">actif</tspan><tspan x="194" fill="#a39c90">BOOLEAN</tspan><tspan x="372" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+  </g>
+  <g>
+    <rect x="1676" y="459" width="360" height="128" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <path d="M1676,493 L2036,493" stroke="#3a342a"/>
+    <text x="1692" y="482" fill="#f3ebdd" font-size="15" font-weight="700">comptes</text>
+    <text x="2022" y="482" fill="#8a8377" font-size="11" text-anchor="end">4 colonnes</text>
+    <text y="508" font-size="12"><tspan x="1692" fill="#c0965e" font-weight="700">id</tspan><tspan x="1844" fill="#a39c90">INTEGER</tspan><tspan x="2022" fill="#c0965e" font-size="10.5" text-anchor="end">PK</tspan></text>
+    <rect x="1677" y="514" width="358" height="21" fill="#1b1812"/>
+    <text y="529" font-size="12"><tspan x="1692" fill="#f3ebdd" font-weight="400">identifiant</tspan><tspan x="1844" fill="#a39c90">VARCHAR(40)</tspan><tspan x="2022" fill="#c0965e" font-size="10.5" text-anchor="end">UQ</tspan></text>
+    <text y="550" font-size="12"><tspan x="1692" fill="#f3ebdd" font-weight="400">mot_de_passe</tspan><tspan x="1844" fill="#a39c90">VARCHAR(255)</tspan><tspan x="2022" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="1677" y="556" width="358" height="21" fill="#1b1812"/>
+    <text y="571" font-size="12"><tspan x="1692" fill="#f3ebdd" font-weight="400">role</tspan><tspan x="1844" fill="#a39c90">VARCHAR(12)</tspan><tspan x="2022" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+  </g>
+  <g>
+    <rect x="1126" y="96" width="360" height="107" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <path d="M1126,130 L1486,130" stroke="#3a342a"/>
+    <text x="1142" y="119" fill="#f3ebdd" font-size="15" font-weight="700">evenements</text>
+    <text x="1472" y="119" fill="#8a8377" font-size="11" text-anchor="end">3 colonnes</text>
+    <text y="145" font-size="12"><tspan x="1142" fill="#c0965e" font-weight="700">id</tspan><tspan x="1294" fill="#a39c90">INTEGER</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end">PK</tspan></text>
+    <rect x="1127" y="151" width="358" height="21" fill="#1b1812"/>
+    <text y="166" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">nom</tspan><tspan x="1294" fill="#a39c90">VARCHAR(120)</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="187" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">description</tspan><tspan x="1294" fill="#a39c90">TEXT</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+  </g>
+  <g>
+    <rect x="1126" y="459" width="360" height="317" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <path d="M1126,493 L1486,493" stroke="#3a342a"/>
+    <text x="1142" y="482" fill="#f3ebdd" font-size="15" font-weight="700">films</text>
+    <text x="1472" y="482" fill="#8a8377" font-size="11" text-anchor="end">13 colonnes</text>
+    <text y="508" font-size="12"><tspan x="1142" fill="#c0965e" font-weight="700">id</tspan><tspan x="1294" fill="#a39c90">INTEGER</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end">PK</tspan></text>
+    <rect x="1127" y="514" width="358" height="21" fill="#1b1812"/>
+    <text y="529" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">titre</tspan><tspan x="1294" fill="#a39c90">VARCHAR(120)</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="550" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">realisation</tspan><tspan x="1294" fill="#a39c90">VARCHAR(120)</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="1127" y="556" width="358" height="21" fill="#1b1812"/>
+    <text y="571" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">annee</tspan><tspan x="1294" fill="#a39c90">INTEGER</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end">NULL</tspan></text>
+    <text y="592" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">duree_min</tspan><tspan x="1294" fill="#a39c90">INTEGER</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="1127" y="598" width="358" height="21" fill="#1b1812"/>
+    <text y="613" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">genre</tspan><tspan x="1294" fill="#a39c90">VARCHAR(40)</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="634" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">synopsis</tspan><tspan x="1294" fill="#a39c90">TEXT</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="1127" y="640" width="358" height="21" fill="#1b1812"/>
+    <text y="655" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">type_production</tspan><tspan x="1294" fill="#a39c90">VARCHAR(20)</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="676" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">couleur</tspan><tspan x="1294" fill="#a39c90">VARCHAR(7)</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="1127" y="682" width="358" height="21" fill="#1b1812"/>
+    <text y="697" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">affiche_url</tspan><tspan x="1294" fill="#a39c90">VARCHAR(300)</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end">NULL</tspan></text>
+    <text y="718" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">image_url</tspan><tspan x="1294" fill="#a39c90">VARCHAR(300)</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end">NULL</tspan></text>
+    <rect x="1127" y="724" width="358" height="21" fill="#1b1812"/>
+    <text y="739" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">source_id</tspan><tspan x="1294" fill="#a39c90">VARCHAR(40)</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end">UQ NULL</tspan></text>
+    <text y="760" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">actif</tspan><tspan x="1294" fill="#a39c90">BOOLEAN</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+  </g>
+  <g>
+    <rect x="1676" y="96" width="360" height="107" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <path d="M1676,130 L2036,130" stroke="#3a342a"/>
+    <text x="1692" y="119" fill="#f3ebdd" font-size="15" font-weight="700">parametres</text>
+    <text x="2022" y="119" fill="#8a8377" font-size="11" text-anchor="end">3 colonnes</text>
+    <text y="145" font-size="12"><tspan x="1692" fill="#c0965e" font-weight="700">cle</tspan><tspan x="1844" fill="#a39c90">VARCHAR(40)</tspan><tspan x="2022" fill="#c0965e" font-size="10.5" text-anchor="end">PK</tspan></text>
+    <rect x="1677" y="151" width="358" height="21" fill="#1b1812"/>
+    <text y="166" font-size="12"><tspan x="1692" fill="#f3ebdd" font-weight="400">valeur</tspan><tspan x="1844" fill="#a39c90">INTEGER</tspan><tspan x="2022" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="187" font-size="12"><tspan x="1692" fill="#f3ebdd" font-weight="400">libelle</tspan><tspan x="1844" fill="#a39c90">VARCHAR(120)</tspan><tspan x="2022" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+  </g>
+  <g>
+    <rect x="26" y="459" width="360" height="107" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <path d="M26,493 L386,493" stroke="#3a342a"/>
+    <text x="42" y="482" fill="#f3ebdd" font-size="15" font-weight="700">salles</text>
+    <text x="372" y="482" fill="#8a8377" font-size="11" text-anchor="end">3 colonnes</text>
+    <text y="508" font-size="12"><tspan x="42" fill="#c0965e" font-weight="700">id</tspan><tspan x="194" fill="#a39c90">INTEGER</tspan><tspan x="372" fill="#c0965e" font-size="10.5" text-anchor="end">PK</tspan></text>
+    <rect x="27" y="514" width="358" height="21" fill="#1b1812"/>
+    <text y="529" font-size="12"><tspan x="42" fill="#f3ebdd" font-weight="400">nom</tspan><tspan x="194" fill="#a39c90">VARCHAR(40)</tspan><tspan x="372" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="550" font-size="12"><tspan x="42" fill="#f3ebdd" font-weight="400">capacite</tspan><tspan x="194" fill="#a39c90">INTEGER</tspan><tspan x="372" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+  </g>
+  <g>
+    <rect x="576" y="96" width="360" height="285" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <path d="M576,130 L936,130" stroke="#3a342a"/>
+    <text x="592" y="119" fill="#f3ebdd" font-size="15" font-weight="700">regles_tarifaires</text>
+    <text x="922" y="119" fill="#8a8377" font-size="11" text-anchor="end">9 colonnes</text>
+    <text y="145" font-size="12"><tspan x="592" fill="#c0965e" font-weight="700">id</tspan><tspan x="744" fill="#a39c90">INTEGER</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">PK</tspan></text>
+    <rect x="577" y="151" width="358" height="21" fill="#1b1812"/>
+    <text y="166" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">libelle</tspan><tspan x="744" fill="#a39c90">VARCHAR(80)</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="187" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">prix_centimes</tspan><tspan x="744" fill="#a39c90">INTEGER</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="577" y="193" width="358" height="21" fill="#1b1812"/>
+    <text y="208" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">priorite</tspan><tspan x="744" fill="#a39c90">INTEGER</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="229" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">jours</tspan><tspan x="744" fill="#a39c90">SMALLINT[]</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">NULL</tspan></text>
+    <rect x="577" y="235" width="358" height="21" fill="#1b1812"/>
+    <text y="250" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">type_production</tspan><tspan x="744" fill="#a39c90">VARCHAR(20)</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">NULL</tspan></text>
+    <text y="271" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">categorie</tspan><tspan x="744" fill="#a39c90">VARCHAR(20)</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">FK NULL</tspan></text>
+    <rect x="577" y="277" width="358" height="21" fill="#1b1812"/>
+    <text y="292" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">evenement_id</tspan><tspan x="744" fill="#a39c90">INTEGER</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">FK NULL</tspan></text>
+    <text y="313" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">actif</tspan><tspan x="744" fill="#a39c90">BOOLEAN</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <path d="M588,329 L924,329" stroke="#3a342a" stroke-dasharray="4 4"/>
+    <text x="592" y="346" fill="#d9b886" font-size="10.5">FK categorie → categories.code, ON DELETE CASCADE</text>
+    <text x="592" y="367" fill="#d9b886" font-size="10.5">FK evenement_id → evenements.id, ON DELETE CASCADE</text>
+  </g>
+  <g>
+    <rect x="576" y="459" width="360" height="285" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <path d="M576,493 L936,493" stroke="#3a342a"/>
+    <text x="592" y="482" fill="#f3ebdd" font-size="15" font-weight="700">seances</text>
+    <text x="922" y="482" fill="#8a8377" font-size="11" text-anchor="end">7 colonnes</text>
+    <text y="508" font-size="12"><tspan x="592" fill="#c0965e" font-weight="700">id</tspan><tspan x="744" fill="#a39c90">INTEGER</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">PK</tspan></text>
+    <rect x="577" y="514" width="358" height="21" fill="#1b1812"/>
+    <text y="529" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">film_id</tspan><tspan x="744" fill="#a39c90">INTEGER</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">FK</tspan></text>
+    <text y="550" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">salle_id</tspan><tspan x="744" fill="#a39c90">INTEGER</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">FK</tspan></text>
+    <rect x="577" y="556" width="358" height="21" fill="#1b1812"/>
+    <text y="571" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">debut</tspan><tspan x="744" fill="#a39c90">TIMESTAMPTZ</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="592" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">version</tspan><tspan x="744" fill="#a39c90">VARCHAR(8)</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="577" y="598" width="358" height="21" fill="#1b1812"/>
+    <text y="613" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">evenement_id</tspan><tspan x="744" fill="#a39c90">INTEGER</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">FK NULL</tspan></text>
+    <text y="634" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">source_id</tspan><tspan x="744" fill="#a39c90">VARCHAR(40)</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">UQ NULL</tspan></text>
+    <path d="M588,650 L924,650" stroke="#3a342a" stroke-dasharray="4 4"/>
+    <text x="592" y="667" fill="#d9b886" font-size="10.5">FK evenement_id → evenements.id, ON DELETE SET NULL</text>
+    <text x="592" y="688" fill="#d9b886" font-size="10.5">FK film_id → films.id, ON DELETE CASCADE</text>
+    <text x="592" y="709" fill="#d9b886" font-size="10.5">FK salle_id → salles.id, ON DELETE CASCADE</text>
+    <text x="592" y="730" fill="#d9b886" font-size="10.5">INDEX (debut), (film_id)</text>
+  </g>
+  <g>
+    <rect x="26" y="854" width="360" height="264" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <path d="M26,888 L386,888" stroke="#3a342a"/>
+    <text x="42" y="877" fill="#f3ebdd" font-size="15" font-weight="700">sieges</text>
+    <text x="372" y="877" fill="#8a8377" font-size="11" text-anchor="end">7 colonnes</text>
+    <text y="903" font-size="12"><tspan x="42" fill="#c0965e" font-weight="700">id</tspan><tspan x="194" fill="#a39c90">INTEGER</tspan><tspan x="372" fill="#c0965e" font-size="10.5" text-anchor="end">PK</tspan></text>
+    <rect x="27" y="909" width="358" height="21" fill="#1b1812"/>
+    <text y="924" font-size="12"><tspan x="42" fill="#f3ebdd" font-weight="400">salle_id</tspan><tspan x="194" fill="#a39c90">INTEGER</tspan><tspan x="372" fill="#c0965e" font-size="10.5" text-anchor="end">FK</tspan></text>
+    <text y="945" font-size="12"><tspan x="42" fill="#f3ebdd" font-weight="400">rang</tspan><tspan x="194" fill="#a39c90">VARCHAR(2)</tspan><tspan x="372" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="27" y="951" width="358" height="21" fill="#1b1812"/>
+    <text y="966" font-size="12"><tspan x="42" fill="#f3ebdd" font-weight="400">numero</tspan><tspan x="194" fill="#a39c90">INTEGER</tspan><tspan x="372" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="987" font-size="12"><tspan x="42" fill="#f3ebdd" font-weight="400">x</tspan><tspan x="194" fill="#a39c90">INTEGER</tspan><tspan x="372" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="27" y="993" width="358" height="21" fill="#1b1812"/>
+    <text y="1008" font-size="12"><tspan x="42" fill="#f3ebdd" font-weight="400">y</tspan><tspan x="194" fill="#a39c90">INTEGER</tspan><tspan x="372" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="1029" font-size="12"><tspan x="42" fill="#f3ebdd" font-weight="400">pmr</tspan><tspan x="194" fill="#a39c90">BOOLEAN</tspan><tspan x="372" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <path d="M38,1045 L374,1045" stroke="#3a342a" stroke-dasharray="4 4"/>
+    <text x="42" y="1062" fill="#d9b886" font-size="10.5">FK salle_id → salles.id, ON DELETE CASCADE</text>
+    <text x="42" y="1083" fill="#d9b886" font-size="10.5">UNIQUE (salle_id, rang, numero)</text>
+    <text x="42" y="1104" fill="#d9b886" font-size="10.5">INDEX (salle_id)</text>
+  </g>
+  <g>
+    <rect x="1126" y="854" width="360" height="348" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <path d="M1126,888 L1486,888" stroke="#3a342a"/>
+    <text x="1142" y="877" fill="#f3ebdd" font-size="15" font-weight="700">commandes</text>
+    <text x="1472" y="877" fill="#8a8377" font-size="11" text-anchor="end">11 colonnes</text>
+    <text y="903" font-size="12"><tspan x="1142" fill="#c0965e" font-weight="700">id</tspan><tspan x="1294" fill="#a39c90">UUID</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end">PK</tspan></text>
+    <rect x="1127" y="909" width="358" height="21" fill="#1b1812"/>
+    <text y="924" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">reference</tspan><tspan x="1294" fill="#a39c90">VARCHAR(16)</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end">UQ</tspan></text>
+    <text y="945" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">seance_id</tspan><tspan x="1294" fill="#a39c90">INTEGER</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end">FK</tspan></text>
+    <rect x="1127" y="951" width="358" height="21" fill="#1b1812"/>
+    <text y="966" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">statut</tspan><tspan x="1294" fill="#a39c90">VARCHAR(12)</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="987" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">canal</tspan><tspan x="1294" fill="#a39c90">VARCHAR(8)</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="1127" y="993" width="358" height="21" fill="#1b1812"/>
+    <text y="1008" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">lignes</tspan><tspan x="1294" fill="#a39c90">JSONB</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="1029" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">montant_centimes</tspan><tspan x="1294" fill="#a39c90">INTEGER</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="1127" y="1035" width="358" height="21" fill="#1b1812"/>
+    <text y="1050" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">psp_session</tspan><tspan x="1294" fill="#a39c90">VARCHAR(64)</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end">UQ NULL</tspan></text>
+    <text y="1071" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">cree_le</tspan><tspan x="1294" fill="#a39c90">TIMESTAMPTZ</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end">now()</tspan></text>
+    <rect x="1127" y="1077" width="358" height="21" fill="#1b1812"/>
+    <text y="1092" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">expire_le</tspan><tspan x="1294" fill="#a39c90">TIMESTAMPTZ</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="1113" font-size="12"><tspan x="1142" fill="#f3ebdd" font-weight="400">payee_le</tspan><tspan x="1294" fill="#a39c90">TIMESTAMPTZ</tspan><tspan x="1472" fill="#c0965e" font-size="10.5" text-anchor="end">NULL</tspan></text>
+    <path d="M1138,1129 L1474,1129" stroke="#3a342a" stroke-dasharray="4 4"/>
+    <text x="1142" y="1146" fill="#d9b886" font-size="10.5">FK seance_id → seances.id, ON DELETE CASCADE</text>
+    <text x="1142" y="1167" fill="#d9b886" font-size="10.5">CHECK statut IN (&#x27;en_attente&#x27;, &#x27;payee&#x27;, &#x27;expiree&#x27;, &#x27;annulee&#x27;)</text>
+    <text x="1142" y="1188" fill="#d9b886" font-size="10.5">INDEX (seance_id)</text>
+  </g>
+  <g>
+    <rect x="576" y="854" width="360" height="474" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <path d="M576,888 L936,888" stroke="#3a342a"/>
+    <text x="592" y="877" fill="#f3ebdd" font-size="15" font-weight="700">billets</text>
+    <text x="922" y="877" fill="#8a8377" font-size="11" text-anchor="end">13 colonnes</text>
+    <text y="903" font-size="12"><tspan x="592" fill="#c0965e" font-weight="700">id</tspan><tspan x="744" fill="#a39c90">UUID</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">PK</tspan></text>
+    <rect x="577" y="909" width="358" height="21" fill="#1b1812"/>
+    <text y="924" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">commande_id</tspan><tspan x="744" fill="#a39c90">UUID</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">FK</tspan></text>
+    <text y="945" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">seance_id</tspan><tspan x="744" fill="#a39c90">INTEGER</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">FK</tspan></text>
+    <rect x="577" y="951" width="358" height="21" fill="#1b1812"/>
+    <text y="966" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">siege_id</tspan><tspan x="744" fill="#a39c90">INTEGER</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">FK</tspan></text>
+    <text y="987" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">categorie</tspan><tspan x="744" fill="#a39c90">VARCHAR(20)</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="577" y="993" width="358" height="21" fill="#1b1812"/>
+    <text y="1008" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">libelle_tarif</tspan><tspan x="744" fill="#a39c90">VARCHAR(80)</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="1029" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">prix_centimes</tspan><tspan x="744" fill="#a39c90">INTEGER</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="577" y="1035" width="358" height="21" fill="#1b1812"/>
+    <text y="1050" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">statut</tspan><tspan x="744" fill="#a39c90">VARCHAR(12)</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="1071" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">jeton</tspan><tspan x="744" fill="#a39c90">TEXT</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">NULL</tspan></text>
+    <rect x="577" y="1077" width="358" height="21" fill="#1b1812"/>
+    <text y="1092" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">emis_le</tspan><tspan x="744" fill="#a39c90">TIMESTAMPTZ</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">now()</tspan></text>
+    <text y="1113" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">utilise_le</tspan><tspan x="744" fill="#a39c90">TIMESTAMPTZ</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">NULL</tspan></text>
+    <rect x="577" y="1119" width="358" height="21" fill="#1b1812"/>
+    <text y="1134" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">rembourse_le</tspan><tspan x="744" fill="#a39c90">TIMESTAMPTZ</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">NULL</tspan></text>
+    <text y="1155" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">remboursement_ref</tspan><tspan x="744" fill="#a39c90">VARCHAR(64)</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">NULL</tspan></text>
+    <path d="M588,1171 L924,1171" stroke="#3a342a" stroke-dasharray="4 4"/>
+    <text x="592" y="1188" fill="#d9b886" font-size="10.5">FK commande_id → commandes.id, ON DELETE CASCADE</text>
+    <text x="592" y="1209" fill="#d9b886" font-size="10.5">FK seance_id → seances.id, ON DELETE CASCADE</text>
+    <text x="592" y="1230" fill="#d9b886" font-size="10.5">FK siege_id → sieges.id, ON DELETE CASCADE</text>
+    <text x="592" y="1251" fill="#d9b886" font-size="10.5">CHECK statut IN (&#x27;valide&#x27;, &#x27;utilise&#x27;, &#x27;rembourse&#x27;)</text>
+    <text x="592" y="1272" fill="#d9b886" font-size="10.5">INDEX UNIQUE PARTIEL (seance_id, siege_id)</text>
+    <text x="592" y="1293" fill="#d9b886" font-size="10.5">   WHERE statut IN (&#x27;valide&#x27;, &#x27;utilise&#x27;)</text>
+    <text x="592" y="1314" fill="#d9b886" font-size="10.5">INDEX (commande_id)</text>
+  </g>
+  <g>
+    <rect x="576" y="1406" width="360" height="201" rx="10" fill="#16140f" stroke="#c0965e" stroke-width="1.5"/>
+    <path d="M576,1440 L936,1440" stroke="#3a342a"/>
+    <text x="592" y="1429" fill="#f3ebdd" font-size="15" font-weight="700">controles</text>
+    <text x="922" y="1429" fill="#8a8377" font-size="11" text-anchor="end">5 colonnes</text>
+    <text y="1455" font-size="12"><tspan x="592" fill="#c0965e" font-weight="700">id</tspan><tspan x="744" fill="#a39c90">INTEGER</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">PK</tspan></text>
+    <rect x="577" y="1461" width="358" height="21" fill="#1b1812"/>
+    <text y="1476" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">billet_id</tspan><tspan x="744" fill="#a39c90">UUID</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">FK NULL</tspan></text>
+    <text y="1497" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">resultat</tspan><tspan x="744" fill="#a39c90">VARCHAR(24)</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <rect x="577" y="1503" width="358" height="21" fill="#1b1812"/>
+    <text y="1518" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">poste</tspan><tspan x="744" fill="#a39c90">VARCHAR(40)</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end"></tspan></text>
+    <text y="1539" font-size="12"><tspan x="592" fill="#f3ebdd" font-weight="400">cree_le</tspan><tspan x="744" fill="#a39c90">TIMESTAMPTZ</tspan><tspan x="922" fill="#c0965e" font-size="10.5" text-anchor="end">now()</tspan></text>
+    <path d="M588,1555 L924,1555" stroke="#3a342a" stroke-dasharray="4 4"/>
+    <text x="592" y="1572" fill="#d9b886" font-size="10.5">FK billet_id → billets.id, ON DELETE SET NULL</text>
+    <text x="592" y="1593" fill="#d9b886" font-size="10.5">INDEX (cree_le)</text>
+  </g>
+  <g>
+    <rect x="1676" y="854" width="360" height="268" rx="10" fill="#0c0b09" stroke="#3a342a"/>
+    <text x="1692" y="880" fill="#f3ebdd" font-size="14" font-weight="700">Légende</text>
+    <text y="906" font-size="12"><tspan x="1692" fill="#c0965e" font-weight="700">PK</tspan><tspan x="1760" fill="#a39c90">clé primaire</tspan></text>
+    <text y="930" font-size="12"><tspan x="1692" fill="#c0965e" font-weight="700">FK</tspan><tspan x="1760" fill="#a39c90">clé étrangère</tspan></text>
+    <text y="954" font-size="12"><tspan x="1692" fill="#c0965e" font-weight="700">UQ</tspan><tspan x="1760" fill="#a39c90">contrainte d&#x27;unicité sur la colonne</tspan></text>
+    <text y="978" font-size="12"><tspan x="1692" fill="#c0965e" font-weight="700">NULL</tspan><tspan x="1760" fill="#a39c90">colonne facultative (sinon NOT NULL)</tspan></text>
+    <text y="1002" font-size="12"><tspan x="1692" fill="#c0965e" font-weight="700">now()</tspan><tspan x="1760" fill="#a39c90">valeur par défaut posée par la base</tspan></text>
+    <line x1="1692" y1="1044" x2="1742" y2="1044" stroke="#c0965e" stroke-width="1.6" marker-end="url(#fin)"/>
+    <text x="1760" y="1048" fill="#a39c90" font-size="12">N lignes vers 1 ligne (clé étrangère)</text>
+    <text x="1692" y="1078" fill="#a39c90" font-size="11.5">Billet : l'index unique partiel interdit deux</text>
+    <text x="1692" y="1095" fill="#a39c90" font-size="11.5">billets valides ou utilisés sur une même place</text>
+    <text x="1692" y="1112" fill="#a39c90" font-size="11.5">d'une même séance (pas de double réservation).</text>
+  </g>
+</svg>

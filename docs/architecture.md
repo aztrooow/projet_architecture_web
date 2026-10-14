@@ -25,7 +25,7 @@ L'application est découpée en quatre services qui ne partagent aucun code et n
 
 | Service | Ce qu'il fait | Ce qu'il détient | Qui l'appelle |
 |---|---|---|---|
-| **front** | Rend côté serveur l'accueil, les fiches films et la borne ; sert l'application React (plan de salle, paiement, billets, contrôle, back-office) | Rien : il lit le catalogue dans l'API | Le navigateur |
+| **front** | Rend côté serveur l'accueil, les fiches films, les infos pratiques et la borne ; sert l'application React (plan de salle, paiement, billets, contrôle, back-office) | Rien : il lit le catalogue dans l'API | Le navigateur |
 | **back** | Toute la logique de billetterie : catalogue, verrous de sièges, commandes, paiement, remboursements, back-office, flux temps réel, import de la programmation | La base PostgreSQL et Redis | Le navigateur, le front, le qr-verifier |
 | **qr-generator** | Signe chaque billet, dessine le QR code (SVG) et le PDF des billets | La clé privée Ed25519 (fichier dans un volume) | Le back (signature, PDF), le navigateur (image du QR), le qr-verifier (clé publique) |
 | **qr-verifier** | Au contrôle d'entrée, vérifie la signature puis demande au back de marquer le billet utilisé | La clé publique seulement | L'application du contrôleur |
@@ -45,6 +45,7 @@ PostgreSQL et Redis tournent aussi en conteneurs, mais seul le back y accède. A
 | Outillage front | Vite, TypeScript | 8 / 6 | Compilation et typage de l'application |
 | Lecture des QR | barcode-detector (ZXing compilé en WebAssembly) | 3.2 | Scan à la caméra du téléphone du contrôleur |
 | Accès aux données | SQLAlchemy (asyncio) avec le pilote asyncpg | 2.1 | Modèle, requêtes, transactions |
+| Migrations | Alembic | 1.20 | Schéma versionné, migration initiale produite par autogenerate, jouée au démarrage du back |
 | Base de données | PostgreSQL | 17 | Source de vérité, contrainte d'unicité partielle |
 | Cache et messages | Redis, client redis-py | 8 / 8.1 | Verrous à expiration, compteurs, pub/sub |
 | Signature | cryptography (Ed25519) | 50 | Signature et vérification des billets |
@@ -52,9 +53,9 @@ PostgreSQL et Redis tournent aussi en conteneurs, mais seul le back y accède. A
 | Authentification | PyJWT, pwdlib (Argon2) | 2.15 / 0.3 | Jetons du personnel, mots de passe hachés |
 | Appels HTTP | httpx | 0.28 | Appels entre services, import de la programmation |
 | Images | Pillow | 12.3 | Teinte dominante des affiches (fond des fiches films) |
-| Conteneurs | Docker, Docker Compose | | Un conteneur par service, lancement en une commande |
-| Frontal | nginx, certificat Let's Encrypt | | HTTPS et routage par préfixe en production |
-| Tests | pytest, pytest-asyncio | 9 / 1.4 | Tests unitaires et tests de parcours contre une vraie base |
+| Conteneurs | Docker, Docker Compose | | Un conteneur par service, deux réseaux (front, back), lancement en une commande |
+| Proxy | nginx (image officielle alpine) | 1.30 | Point d'entrée unique des conteneurs, routage par préfixe ; en production, le nginx du serveur ajoute HTTPS (Let's Encrypt) |
+| Tests | pytest, pytest-asyncio | 9 / 1.4 | Tests unitaires, de parcours et de migrations contre une vraie base |
 
 Polices : Barlow, Barlow Condensed et Barlow Semi Condensed (licence OFL), intégrées au build du front par les paquets `@fontsource`, sans appel à un service extérieur.
 
@@ -66,7 +67,7 @@ back/                       API de billetterie
     main.py                 démarrage, routes, sonde /api/sante
     config.py               variables d'environnement
     models.py               tables (SQLAlchemy)
-    routes/                 catalogue, commandes, admin, auth, interne
+    routes/                 catalogue, commandes, admin, auth, donnees, interne
     verrous.py              verrous de sièges (scripts Lua dans Redis)
     remplissage.py          compteurs de places vendues
     temps_reel.py           abonnement Redis unique et flux SSE
@@ -74,15 +75,22 @@ back/                       API de billetterie
     paiement.py             interface du prestataire et prestataire simulé
     qr_client.py            appels au qr-generator
     programmation_cgr.py    import de la programmation réelle
-    initialisation.py       schéma, salles, tarifs, tâche horaire
+    initialisation.py       données de référence, programmation, tâche horaire
+    fixtures.py             chargement idempotent des fixtures (python -m app.fixtures)
+  migrations/               Alembic : env.py (verrou), versions/0001_schema_initial.py
+  alembic.ini               configuration d'Alembic
+  entrypoint.sh             migrations, fixtures, puis uvicorn
   tests/
 qr-generator/               signature Ed25519, QR code, PDF
 qr-verifier/                vérification, mode dégradé
 front/
-  server/                   FastAPI + Jinja : pages rendues côté serveur
-  web/                      application React (Vite)
-docs/                       cette documentation et le schéma
-docker-compose.yml          les six conteneurs et les profils de test
+  server/                   FastAPI + Jinja : pages rendues côté serveur (accueil, films, infos, borne)
+  web/                      application React (Vite) : réservation, contrôle, espace gérant et ses données
+  tests/                    pages du front, API simulée
+nginx/nginx.conf            proxy : routage par préfixe vers les quatre services
+docs/                       cette documentation, schémas (architecture, base de données, Docker), questions du cours
+docker-compose.yml          les sept conteneurs, deux réseaux et les profils de test
+docker-compose.debug.yml    publie chaque service sur l'hôte, pour le débogage
 ```
 
 ## 4. Les échanges pas à pas
@@ -184,6 +192,20 @@ Pour que les plans de salle ne soient pas vides à la démonstration, chaque nou
 
 ## 5. Données
 
+### Schéma, migrations et fixtures
+
+![Schéma de la base de données](base-de-donnees.svg)
+
+Le schéma ci-dessus est généré à partir de `back/app/models.py`. Il est créé et versionné par **Alembic** :
+
+- `back/migrations/versions/0001_schema_initial.py` crée les douze tables (produite par `alembic revision --autogenerate`, relue) ; la table `alembic_version` retient la version atteinte ;
+- au démarrage du conteneur back, `entrypoint.sh` lance `alembic upgrade head`, puis `python -m app.fixtures`, puis uvicorn. `migrations/env.py` prend un verrou consultatif PostgreSQL (`pg_advisory_lock`) avant de migrer : avec plusieurs répliques, une seule migre, les autres attendent puis constatent que la base est à jour ;
+- une base créée avant l'introduction d'Alembic (par l'ancien `create_all`) est reconnue et marquée à la révision `0001` sans rejouer la création des tables ;
+- les **fixtures** (salles et sièges, catégories, règles tarifaires, évènement du samedi, réglages, comptes du personnel) sont chargées de façon idempotente : on ne recrée salles, tarifs et réglages que sur une base vide (le gérant les modifie ensuite), et les mots de passe du personnel suivent la configuration à chaque démarrage ;
+- la programmation (films, séances) est importée ensuite par le back lui-même, au démarrage puis toutes les heures.
+
+Une nouvelle évolution du schéma suit le même chemin : modifier `models.py`, lancer `alembic revision --autogenerate -m "..."` depuis `back/`, relire le fichier produit, le committer ; le prochain démarrage du back l'applique.
+
 ### Tables
 
 | Table | Contenu | Contraintes utiles |
@@ -216,9 +238,10 @@ Les accolades de `verrou:{42}:...` forment un « hash tag » : toutes les clés 
 
 - **Billets.** Jeton `CIN1.<contenu>.<signature>` signé en Ed25519, sans donnée personnelle. Un jeton modifié ou signé avec une autre clé est refusé au contrôle, et le qr-generator refuse même d'en dessiner le QR code.
 - **Personnel.** Connexion par identifiant et mot de passe (haché en Argon2), puis jeton JWT valable 12 heures. Le back-office exige le rôle gérant ; le contrôle accepte gérant et contrôleur. Le flux SSE du gérant reçoit le jeton en paramètre, car un `EventSource` ne sait pas envoyer d'en-tête.
-- **Entre services.** Les routes `/internal/...` exigent l'en-tête `X-Service-Token` et ne sont jamais exposées par nginx (réponse 404 depuis l'extérieur).
+- **Entre services.** Les routes `/internal/...` exigent l'en-tête `X-Service-Token` et ne sont jamais exposées par le proxy nginx (réponse 404 depuis l'extérieur).
+- **Données.** Les routes `/api/donnees/...` donnent le contenu de chaque table : celles du catalogue sont publiques, commandes, billets, journal du contrôle et comptes exigent le jeton du gérant. Un mot de passe haché n'est jamais renvoyé et le jeton signé d'un billet est abrégé.
 - **Paiement.** Aucune donnée de carte ne passe par nos services, le prestataire s'en charge.
-- **Réseau.** Les ports des conteneurs ne sont publiés que sur 127.0.0.1 ; en production, seul nginx est joignable, en HTTPS.
+- **Réseau.** Le proxy est le seul conteneur dont un port est publié, et seulement sur 127.0.0.1. Deux réseaux Docker : `front` (proxy et services applicatifs) et `back` (back, PostgreSQL, Redis) ; la base et Redis ne sont joignables que par le back. En production, le nginx du serveur ajoute HTTPS.
 - **Secrets.** Mots de passe, jetons et clé privée viennent de l'environnement ou d'un volume, jamais du dépôt (`.env` est ignoré par git).
 
 ## 7. Configuration
@@ -233,7 +256,7 @@ Chaque service lit ses réglages dans ses variables d'environnement, que `docker
 | back, qr-verifier | `JWT_SECRET` | Clé des jetons du personnel |
 | back | `JWT_DUREE_HEURES` | Durée de validité d'une connexion (12 par défaut) |
 | back | `GERANT_MOT_DE_PASSE`, `CONTROLEUR_MOT_DE_PASSE` | Mots de passe du personnel, réappliqués à chaque démarrage |
-| back | `DONNEES_DEMO` | Crée salles, tarifs et programmation au premier démarrage (désactivé pour les tests) |
+| back | `DONNEES_DEMO` | Charge les fixtures (salles, tarifs, réglages) sur une base vide et importe la programmation (désactivé pour les tests) |
 | back | `PROGRAMME_SOURCE` | `cgr` (programmation réelle), `demo` (semaine fictive) ou `aucune` |
 | back | `PROGRAMME_API`, `PROGRAMME_CINEMA` | Adresse de la source et code du cinéma (B0059, CGR Évry 2) |
 | back, qr-generator, qr-verifier | `CORS_ORIGINS` | Origines autorisées quand le navigateur appelle un service directement |
@@ -241,7 +264,9 @@ Chaque service lit ses réglages dans ses variables d'environnement, que `docker
 | qr-verifier | `BACK_URL` | Adresse interne du back |
 | qr-verifier | `CLE_PUBLIQUE` | Clé publique en PEM (sinon lue auprès du qr-generator) |
 | front | `API_INTERNE` | Adresse du back pour le rendu serveur |
-| front | `URL_API`, `URL_QR`, `URL_VERIFICATION` | Adresses vues par le navigateur (vides = même domaine) |
+| front | `URL_API`, `URL_QR`, `URL_VERIFICATION` | Adresses vues par le navigateur (vides par défaut = même domaine, c'est-à-dire le proxy) |
+| compose | `PROXY_PORT` | Port de l'hôte publié par le proxy (80 par défaut ; un port libre sur le serveur, où le nginx de l'hôte prend déjà le 80) |
+| compose | `POSTGRES_PASSWORD` | Mot de passe de la base, partagé entre le conteneur postgres et le back |
 
 ## 8. Déploiement
 
@@ -252,11 +277,13 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Le site répond sur http://localhost:8080. Chaque service expose sa documentation sur son port : http://localhost:8000/api/docs, http://localhost:8001/qr/docs et http://localhost:8002/verification/docs.
+![Infrastructure Docker](infrastructure-docker.svg)
+
+Tout passe par le proxy nginx : le site répond sur http://localhost/ (port 80 de l'hôte, `PROXY_PORT` pour en changer). La documentation de chaque service se lit par la même adresse : http://localhost/api/docs, http://localhost/qr/docs et http://localhost/verification/docs. Pour joindre un service seul (débogage), `docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d` publie en plus leurs ports (8080, 8000, 8001, 8002) sur 127.0.0.1.
 
 ### En production
 
-La même composition tourne sur le serveur, derrière un nginx qui fait le HTTPS (Let's Encrypt) et route par préfixe : `/` vers le front, `/api` vers le back (tampon coupé pour les flux SSE), `/qr` vers le qr-generator, `/verification` vers le qr-verifier. `/internal` renvoie 404. Mise à jour, dans le dossier du dépôt sur le serveur :
+La même composition tourne sur le serveur, derrière le nginx de l'hôte qui fait le HTTPS (Let's Encrypt) et route par préfixe : `/` vers le front, `/api` vers le back (tampon coupé pour les flux SSE), `/qr` vers le qr-generator, `/verification` vers le qr-verifier. `/internal` renvoie 404. Le port 80 étant pris par ce nginx, le fichier `.env` du serveur fixe `PROXY_PORT` à un port libre pour le conteneur proxy ; le nginx de l'hôte peut viser ce port unique (le conteneur applique les mêmes règles de préfixe) ou continuer de viser les ports des services, que `docker-compose.debug.yml` publie (`COMPOSE_FILE=docker-compose.yml:docker-compose.debug.yml`). Mise à jour, dans le dossier du dépôt sur le serveur :
 
 ```bash
 git pull
@@ -270,13 +297,13 @@ Le découpage est déjà celui d'un déploiement Kubernetes ; le passage consist
 | Aujourd'hui (Compose) | Demain (Kubernetes) |
 |---|---|
 | un service `front`, `back`, `qr-generator`, `qr-verifier` | un `Deployment` et un `Service` chacun ; plusieurs répliques du back avec un `HorizontalPodAutoscaler` |
-| nginx en frontal, routage par préfixe | un `Ingress` avec les mêmes règles, sans `/internal` |
+| conteneur nginx (`nginx/nginx.conf`), routage par préfixe | un `Ingress` avec les mêmes règles, sans `/internal` |
 | fichier `.env` | `Secret` (JWT, jeton de service, clé Ed25519 montée en fichier) et `ConfigMap` |
 | volumes `postgres` et `cles` | `StatefulSet` PostgreSQL avec `PersistentVolumeClaim` ; volume ou `Secret` pour la clé |
 | sondes appelées à la main | `readinessProbe` et `livenessProbe` sur `/api/sante`, `/qr/sante`, `/verification/sante`, `/sante` |
-| réseau Docker | `NetworkPolicy` : seuls les services appellent `/internal`, seul le back parle à la base |
+| réseaux Docker `front` et `back` | `NetworkPolicy` : seuls les services appellent `/internal`, seul le back parle à la base |
 
-Le back est déjà prêt à tourner en plusieurs exemplaires : aucune session en mémoire, verrous et compteurs dans Redis, un seul abonnement Redis par instance, création du schéma et import protégés par un verrou consultatif PostgreSQL. Seul le qr-verifier garde un état en mémoire, la liste des passages à rejouer pendant une panne du back.
+Le back est déjà prêt à tourner en plusieurs exemplaires : aucune session en mémoire, verrous et compteurs dans Redis, un seul abonnement Redis par instance, migrations Alembic, fixtures et import protégés par un verrou consultatif PostgreSQL. Seul le qr-verifier garde un état en mémoire, la liste des passages à rejouer pendant une panne du back.
 
 ## 9. Tests
 
@@ -284,15 +311,20 @@ Le back est déjà prêt à tourner en plusieurs exemplaires : aucune session en
 docker compose --profile tests run --rm back-tests
 docker compose --profile tests run --rm qr-generator-tests
 docker compose --profile tests run --rm qr-verifier-tests
+docker compose --profile tests run --rm front-tests
 ```
 
 | Suite | Ce qui est vérifié |
 |---|---|
 | back, tarifs | prix selon le jour (à l'heure de Paris), le type de film et la catégorie ; tarif unique d'un événement ; règle la plus précise à priorité égale ; règle inactive ignorée |
 | back, parcours | achat complet et PDF ; 25 réservations simultanées du même siège (une seule réussit) ; refus d'un doublon par la base ; annulation qui libère les places ; paiement refusé après expiration ; nombre de places limité ; entrée unique au contrôle puis remboursement impossible ; routes internes fermées ; remplissage qui suit les ventes ; back-office réservé au gérant |
+| back, migrations | le schéma produit par la migration est identique aux modèles ; migration réversible ; base créée avant Alembic reconnue |
+| back, fixtures | chargement rejoué sans doublon ; mots de passe du personnel qui suivent la configuration |
+| back, données | une route par table, toutes les lignes et toutes les colonnes ; tables sensibles réservées au gérant ; aucun mot de passe haché ni jeton complet dans les réponses ; pagination ; détail d'une ligne |
 | back, programmation | version VF ou VOST ; identifiants de séance courts et stables ; placement dans une salle libre ; grande salle pour l'écran ICE ; lecture d'une fiche film de la source |
 | qr-generator | jeton vérifiable avec la seule clé publique ; jeton modifié refusé ; image SVG ; PDF ; routes internes protégées ; clé conservée entre deux démarrages |
 | qr-verifier | billet accepté une seule fois ; billet remboursé refusé ; faux billet signé avec une autre clé ; code illisible ; accès réservé au personnel ; mode dégradé quand le back ne répond plus |
+| front | page « Infos pratiques » (accès, horaires, grille lue dans l'API, repli quand le back est arrêté, lien dans le menu) ; application React servie sous `/admin` et `/admin/donnees/...` ; sonde |
 
 Les tests du back tournent contre un vrai PostgreSQL et un vrai Redis (base dédiée `cinetint_tests`), pour éprouver les vraies contraintes et les vrais scripts Lua.
 

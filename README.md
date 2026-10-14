@@ -13,7 +13,7 @@ Version en ligne : **https://fisa.eclipse-technology.eu**
 | Espace gérant | [/admin](https://fisa.eclipse-technology.eu/admin) |
 | Documentation de l'API | [/api/docs](https://fisa.eclipse-technology.eu/api/docs) |
 
-Documentation technique : [docs/architecture.md](docs/architecture.md) (schéma, technologies, échanges entre services, données, déploiement).
+Documentation technique : [docs/architecture.md](docs/architecture.md) (schéma, technologies, échanges entre services, données, déploiement). Schémas : [base de données](docs/base-de-donnees.svg), [infrastructure Docker](docs/infrastructure-docker.svg). Réponses aux questions du cours : [docs/questions-cours.md](docs/questions-cours.md).
 
 ---
 
@@ -80,6 +80,7 @@ La billetterie en ligne répond aux deux : elle sort la vente des bornes (la cap
 - Places bloquées 10 minutes pendant le paiement, puis remises en vente automatiquement.
 - Billets avec QR code signé, affichés après paiement et téléchargeables en PDF.
 - Remboursement en ligne jusqu'à une heure avant la séance, refusé si le billet a déjà été scanné.
+- Page « Infos pratiques » (`/infos`) : accès au cinéma, horaires, grille des tarifs lue dans l'API.
 
 **Borne** : la même application en mode kiosque (`/borne`), grands boutons, retour automatique au programme.
 
@@ -92,6 +93,7 @@ La billetterie en ligne répond aux deux : elle sort la vente des bornes (la cap
 - Recherche d'une commande par référence et remboursement.
 - Journal du contrôle d'entrée (repasses et faux billets compris).
 - Réglages : durée du blocage des places, nombre maximum de places par commande, délai de remboursement.
+- Données : une page par table de la base (toutes les lignes, toutes les colonnes, pagination) et le détail d'une ligne, depuis `/admin/donnees`.
 
 **Programmation réelle.** Les films, affiches, synopsis et horaires sont repris chaque heure de la programmation publique du CGR Évry 2, puis répartis sur nos six salles. Si cette source ne répond pas, la programmation en place est conservée ; s'il n'y a plus aucune séance à venir (premier démarrage sans réseau, par exemple), une semaine fictive est générée. Pour que les plans de salle ne soient pas vides à la démonstration, chaque nouvelle séance reçoit des ventes simulées, enregistrées comme des ventes aux bornes.
 
@@ -99,20 +101,20 @@ La billetterie en ligne répond aux deux : elle sort la vente des bornes (la cap
 
 ## 3. Architecture principale
 
-Quatre services applicatifs, chacun dans son conteneur, plus PostgreSQL et Redis.
+Quatre services applicatifs, chacun dans son conteneur, plus PostgreSQL, Redis et un conteneur nginx qui sert de point d'entrée unique.
 
 ![Architecture de CinetINT : services, technologies et échanges](docs/architecture.svg)
 
 La [documentation technique](docs/architecture.md) détaille chaque service, les technologies et leurs versions, les échanges pas à pas (diagrammes de séquence), les clés Redis, la sécurité, la configuration et le passage sous Kubernetes.
 
-| Service | Rôle | Port | Détient |
+| Service | Rôle | Port (interne) | Détient |
 |---|---|---|---|
 | **front** | Rend côté serveur l'accueil, les fiches films et la borne (rapides, lisibles par les moteurs de recherche) ; sert l'application React pour le plan de salle, le paiement, les billets, le contrôle et le back-office | 8080 | rien |
 | **back** | API REST de la billetterie : catalogue, verrous de sièges, commandes, paiement, remboursements, back-office, flux temps réel | 8000 | PostgreSQL, Redis |
 | **qr-generator** | Signe les billets, dessine les QR codes et le PDF | 8001 | la clé privée |
 | **qr-verifier** | Vérifie la signature d'un billet puis demande au back le passage atomique de « valide » à « utilisé » | 8002 | la clé publique seulement |
 
-Les routes `/internal/...` ne servent qu'entre services (en-tête `X-Service-Token`) et ne sont jamais exposées par le reverse proxy.
+Le seul port publié est celui du **proxy** nginx (`http://localhost/`), qui répartit le trafic par préfixe d'URL ; les ports des services ne sont joignables que sur les réseaux Docker. Les routes `/internal/...` ne servent qu'entre services (en-tête `X-Service-Token`) et ne sont jamais exposées par le proxy (404).
 
 **Pourquoi séparer la génération et la vérification ?** Le vérificateur ne possède que la clé publique : il peut dire si un billet vient bien de nous, jamais en fabriquer un. Une fuite du poste de contrôle ne permet donc pas d'émettre de faux billets.
 
@@ -128,7 +130,7 @@ Les routes `/internal/...` ne servent qu'entre services (en-tête `X-Service-Tok
 | Cache | Redis 8 | Expiration automatique des clés pour les verrous, compteurs atomiques, pub/sub entre instances |
 | Signature | Ed25519 (bibliothèque `cryptography`) | Signature courte (64 octets), QR code lisible, vérification sans secret partagé |
 | QR et PDF | `segno`, `fpdf2` | Rendu côté serveur, rien à installer chez le spectateur |
-| Conteneurs | Docker, un conteneur par service | Préparation directe au passage sous Kubernetes |
+| Conteneurs | Docker, un conteneur par service, nginx en proxy, migrations Alembic | Préparation directe au passage sous Kubernetes ; schéma versionné |
 
 ### Parcours d'un achat
 
@@ -147,6 +149,12 @@ Les routes `/internal/...` ne servent qu'entre services (en-tête `X-Service-Tok
 ---
 
 ## 4. Modèle de données
+
+Schéma complet de la base (tables, colonnes, types, clés, contraintes d'unicité et de statut, index), généré à partir des modèles SQLAlchemy de `back/app/models.py` :
+
+![Schéma de la base de données de CinetINT](docs/base-de-donnees.svg)
+
+Le schéma est créé par la migration Alembic `back/migrations/versions/0001_schema_initial.py`, produite par `alembic revision --autogenerate` puis relue ; un test vérifie qu'elle reste identique aux modèles. Version simplifiée des relations :
 
 ```mermaid
 erDiagram
@@ -264,6 +272,18 @@ La documentation interactive de chaque service est générée par FastAPI : `/ap
 | POST | `/api/admin/billets/{id}/remboursement` | Remboursement par le gérant |
 | GET | `/api/admin/controles` | Journal du contrôle d'entrée |
 
+### back, données de chaque table
+
+Une route JSON par table, avec toutes les lignes et toutes les colonnes (`?limite=` et `?decalage=` pour paginer). Les tables du catalogue sont publiques ; commandes, billets, journal du contrôle et comptes exigent le jeton du gérant. Un mot de passe haché n'est jamais renvoyé (la colonne est masquée) et le jeton signé d'un billet est abrégé.
+
+| Méthode | Chemin | Rôle |
+|---|---|---|
+| GET | `/api/donnees` | Les tables disponibles et leur nombre de lignes |
+| GET | `/api/donnees/{table}` | Toutes les lignes de la table, avec la description de ses colonnes |
+| GET | `/api/donnees/{table}/{cle}` | Une ligne, désignée par sa clé primaire |
+
+Tables publiques : `salles`, `sieges`, `films`, `evenements`, `seances`, `categories`, `regles-tarifaires`, `parametres`. Tables réservées au gérant : `commandes`, `billets`, `controles`, `comptes`.
+
 ### qr-generator
 
 | Méthode | Chemin | Rôle |
@@ -289,7 +309,75 @@ La documentation interactive de chaque service est générée par FastAPI : `/ap
 
 ---
 
-## 7. Lancer le projet
+## 7. Arbre des URLs
+
+Tout passe par le proxy : `http://localhost/` en local, `https://fisa.eclipse-technology.eu/` en ligne.
+
+### Pages du front (service front)
+
+| URL | Page |
+|---|---|
+| `/` | Accueil : programme, évènement du samedi, tarifs, navigation |
+| `/films/{id}` | Fiche d'un film et ses séances par jour |
+| `/infos` | Infos pratiques : accès, horaires, grille des tarifs |
+| `/borne` | Borne du hall (mode kiosque) |
+| `/seances/{id}`, `/paiement/{id}`, `/commande/{id}` | Plan de salle, paiement, billets (application React) |
+| `/controle` | Contrôle des billets (connexion contrôleur ou gérant) |
+| `/admin` | Espace gérant : remplissage, programmation, tarifs, billets, contrôles, paramètres (connexion gérant) |
+| `/admin/donnees` | Données : accueil de la section, une carte par table avec son nombre de lignes |
+| `/admin/donnees/{table}` | Toutes les lignes et toutes les colonnes d'une table, paginées par 50 |
+| `/admin/donnees/{table}/{cle}` | Détail d'une ligne, avec un lien vers les lignes qu'elle référence |
+| `/sante` | Sonde du front |
+
+Les tables de `/admin/donnees/{table}` : `salles`, `sieges`, `films`, `evenements`, `seances`, `categories`, `regles-tarifaires`, `parametres`, `commandes`, `billets`, `controles`, `comptes`.
+
+### Routes de l'API (service back)
+
+| URL | Contenu |
+|---|---|
+| `/api/` + `programme`, `films/{id}`, `seances/{id}`, `tarifs`, `categories`, `commandes`... | Routes métier, détaillées à la section 6 |
+| `/api/donnees` | Les 12 tables et leur nombre de lignes |
+| `/api/donnees/salles`, `/sieges`, `/films`, `/evenements`, `/seances`, `/categories`, `/regles-tarifaires`, `/parametres` | Toutes les lignes en JSON (public) |
+| `/api/donnees/commandes`, `/billets`, `/controles`, `/comptes` | Toutes les lignes en JSON (jeton du gérant) |
+| `/api/donnees/{table}/{cle}` | Détail d'une ligne en JSON |
+| `/api/admin/...` | Back-office (jeton du gérant) |
+| `/api/docs` | Documentation interactive (OpenAPI) |
+| `/api/sante` | Sonde (base et Redis) |
+
+### Autres services
+
+| URL | Service |
+|---|---|
+| `/qr/{jeton}.svg`, `/qr/cle-publique`, `/qr/docs`, `/qr/sante` | qr-generator |
+| `/verification`, `/verification/docs`, `/verification/sante` | qr-verifier |
+| `/internal/...` | 404 au proxy : routes entre services uniquement |
+
+---
+
+## 8. Conteneurisation Docker
+
+![Infrastructure Docker de CinetINT : espaces de noms, cgroups, réseaux, DNS, volumes](docs/infrastructure-docker.svg)
+
+Sept conteneurs (proxy, front, back, qr-generator, qr-verifier, postgres, redis), construits ou tirés par `docker-compose.yml`.
+
+| Point | Mise en oeuvre |
+|---|---|
+| **Proxy** | `nginx:1.30.5-alpine`, configuration dans `nginx/nginx.conf`, seul port publié : `127.0.0.1:${PROXY_PORT:-80}:80`. Répartition par préfixe d'URL (voir la section 10), tampon désactivé pour le SSE, `/internal` en 404 |
+| **Séparation front / back** | Un Dockerfile par service (`front/Dockerfile`, `back/Dockerfile`, `qr-generator/Dockerfile`, `qr-verifier/Dockerfile`), chacun avec sa configuration propre par variables d'environnement. Le front est construit en deux étapes (Node pour compiler l'application React, Python pour la servir) ; chaque service a une étape `tests` |
+| **Réseaux** | `front` : le proxy et les quatre services applicatifs. `back` : le back, PostgreSQL et Redis. La base et Redis ne sont joignables que par le back |
+| **DNS interne** | Les services s'adressent par leur nom (`http://back:8000`, `postgres:5432`), résolus par le DNS de Docker (127.0.0.11) |
+| **Base de données** | Conteneur `postgres:17-alpine`, volume nommé `postgres`, accessible au seul back |
+| **Migrations** | Alembic (`back/alembic.ini`, `back/migrations/`) : `back/entrypoint.sh` lance `alembic upgrade head` au démarrage du conteneur back, sous verrou consultatif PostgreSQL (plusieurs répliques sans conflit) |
+| **Fixtures** | `python -m app.fixtures`, lancé juste après les migrations : salles et sièges, catégories, règles tarifaires, évènement, réglages, comptes du personnel. Idempotent : relancé, il ne crée aucun doublon |
+| **Santé et ordre de démarrage** | `healthcheck` sur chaque conteneur ; `depends_on` avec `service_healthy` : le back attend la base et Redis, le proxy attend les quatre services |
+| **Limites de ressources** | CPU et mémoire plafonnés par service (cgroups, `deploy.resources.limits`) |
+| **Volumes** | `postgres` (données de la base), `cles` (clé privée du qr-generator), `nginx.conf` monté en lecture seule dans le proxy |
+
+Réponses aux questions du cours (Dockerfile, compose, variables d'environnement, DNS, migrations, parcours d'une requête) : [docs/questions-cours.md](docs/questions-cours.md).
+
+---
+
+## 9. Lancer le projet
 
 Prérequis : Docker et Docker Compose.
 
@@ -298,14 +386,30 @@ cp .env.example .env
 docker compose up --build
 ```
 
-| Service | Adresse locale |
+Tout est ensuite joignable par le proxy, sur **http://localhost/** :
+
+| Adresse | Contenu |
 |---|---|
-| Site | http://localhost:8080 |
-| API et sa documentation | http://localhost:8000/api/docs |
-| Génération des billets | http://localhost:8001/qr/docs |
-| Vérification | http://localhost:8002/verification/docs |
+| http://localhost/ | Site (programme et réservation) |
+| http://localhost/infos | Infos pratiques |
+| http://localhost/admin | Espace gérant |
+| http://localhost/admin/donnees | Une page par table de la base |
+| http://localhost/api/donnees | Les mêmes données en JSON |
+| http://localhost/api/docs | Documentation de l'API |
+| http://localhost/qr/docs | Documentation de la génération des billets |
+| http://localhost/verification/docs | Documentation de la vérification |
+
+Le port 80 est publié sur 127.0.0.1 seulement. S'il est déjà pris sur la machine, choisir un autre port avec `PROXY_PORT` dans `.env` (par exemple `PROXY_PORT=8080`, puis http://localhost:8080/).
 
 Comptes du personnel en local : `gerant` / `gerant` et `controleur` / `controleur` (à changer dans `.env`).
+
+Au premier lancement, le conteneur back crée le schéma (migrations), charge les fixtures puis importe la programmation du CGR (quelques secondes) ; le proxy n'ouvre le port qu'une fois les quatre services « healthy ».
+
+Pour déboguer un service seul (curl, documentation interactive), `docker-compose.debug.yml` publie en plus chaque service sur l'hôte :
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d
+```
 
 Tests (base et Redis de test lancés par Compose) :
 
@@ -313,15 +417,16 @@ Tests (base et Redis de test lancés par Compose) :
 docker compose --profile tests run --rm back-tests
 docker compose --profile tests run --rm qr-generator-tests
 docker compose --profile tests run --rm qr-verifier-tests
+docker compose --profile tests run --rm front-tests
 ```
 
-Ils couvrent le moteur de tarification, la course de 25 acheteurs sur un même siège, la contrainte d'unicité en base, l'expiration d'une commande, le contrôle à usage unique, le refus de remboursement après scan, la signature et la falsification des billets, le mode dégradé du vérificateur et l'import de la programmation.
+Ils couvrent le moteur de tarification, la course de 25 acheteurs sur un même siège, la contrainte d'unicité en base, l'expiration d'une commande, le contrôle à usage unique, le refus de remboursement après scan, la signature et la falsification des billets, le mode dégradé du vérificateur, l'import de la programmation, les migrations (schéma identique aux modèles, base antérieure reconnue), le chargement idempotent des fixtures, les routes de données et les pages du front (infos pratiques).
 
 ---
 
-## 8. Déploiement
+## 10. Déploiement
 
-La version en ligne tourne avec le même `docker-compose.yml`. Un nginx en frontal sert HTTPS et route par préfixe, comme le fera l'Ingress Kubernetes :
+La version en ligne tourne avec le même `docker-compose.yml`. Le conteneur nginx du dépôt (`nginx/nginx.conf`) répartit le trafic par préfixe, comme le fera l'Ingress Kubernetes. En production, un nginx en frontal sert en plus HTTPS et route de la même manière vers les ports de l'hôte :
 
 | Préfixe | Service |
 |---|---|
@@ -329,13 +434,15 @@ La version en ligne tourne avec le même `docker-compose.yml`. Un nginx en front
 | `/api` | back (tampon désactivé pour les flux SSE) |
 | `/qr` | qr-generator |
 | `/verification` | qr-verifier |
-| `/internal` | jamais exposé |
+| `/internal` | jamais exposé (404) |
 
-Les variables `URL_API`, `URL_QR` et `URL_VERIFICATION` restent vides dans ce cas : le navigateur appelle tout sur le même domaine.
+Les variables `URL_API`, `URL_QR` et `URL_VERIFICATION` restent vides (c'est la valeur par défaut) : le navigateur appelle tout sur le même domaine.
+
+Sur le serveur, le port 80 appartient déjà au nginx de l'hôte : le fichier `.env` y fixe `PROXY_PORT` à un port libre (le conteneur proxy est alors joignable en local sur ce port). Le nginx de l'hôte peut soit viser ce port unique, soit continuer de router par préfixe vers les ports des services si l'on ajoute `docker-compose.debug.yml` (`COMPOSE_FILE=docker-compose.yml:docker-compose.debug.yml`).
 
 ---
 
-## 9. Plan d'action
+## 11. Plan d'action
 
 | Étape | Contenu | État |
 |---|---|---|
@@ -353,11 +460,11 @@ Passage sous Kubernetes, prévu pour la suite du cours :
 - les sondes `readiness` et `liveness` sur `/api/sante`, `/qr/sante`, `/verification/sante` et `/sante` ;
 - une `NetworkPolicy` qui limite les appels `/internal` aux services eux-mêmes.
 
-Le démarrage de plusieurs répliques du back en même temps est déjà prévu : la création du schéma et l'import de la programmation sont protégés par un verrou consultatif PostgreSQL.
+Le démarrage de plusieurs répliques du back en même temps est déjà prévu : les migrations Alembic, le chargement des fixtures et l'import de la programmation sont protégés par un verrou consultatif PostgreSQL.
 
 ---
 
-## 10. Points ouverts avec le client
+## 12. Points ouverts avec le client
 
 Valeurs retenues par défaut, toutes réglables par le gérant sans redéploiement :
 
