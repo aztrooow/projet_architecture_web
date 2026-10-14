@@ -62,16 +62,16 @@ k8s/
    kubectl top pods -n u-XXX                           # metrics-server présent (défi 9)
    kubectl get ingressclass                            # nom de la classe d'Ingress (nginx attendu)
    ```
-5. Choisir un compte Docker Hub (public) pour les images, puis construire et publier (depuis la racine du dépôt) :
+5. Les images sont publiées en public sur le registre GitHub ghcr.io/eldertek. Pour les reconstruire et les publier (depuis la racine du dépôt) :
 
    ```text
-   docker login
+   gh auth token | docker login ghcr.io -u eldertek --password-stdin   # jeton avec le droit write:packages
    REGISTRE=ghcr.io/eldertek ./k8s/images.sh tout          # v1 des quatre images (construire + pousser)
    TAG=v2 REGISTRE=ghcr.io/eldertek ./k8s/images.sh tout front   # v2 du front pour le défi 8 (page /infos)
    ```
 
    Le script ne pousse rien sans `REGISTRE` explicite. Il construit pour l'architecture de la machine : le cluster est en amd64, sur un Mac ARM construire à la main avec `docker buildx build --platform linux/amd64 --push`.
-   Rate limit de Docker Hub : les nœuds du cluster partagent des adresses IP ; si des `ImagePullBackOff` « toomanyrequests » apparaissent, créer un Secret `docker-registry` et le déclarer dans `images.pullSecrets`.
+   Rate limit de Docker Hub (images postgres et redis) : les nœuds du cluster partagent des adresses IP ; si des `ImagePullBackOff` « toomanyrequests » apparaissent, créer un Secret `docker-registry` et le déclarer dans `images.pullSecrets`.
 
 ## Ordre d'application et commandes de démonstration
 
