@@ -213,6 +213,7 @@
   display: flex;
   gap: 4px;
   overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .admin__nav a {
@@ -679,4 +680,157 @@
   padding: 10px 12px;
   border-radius: var(--rayon-puce);
   background: var(--surface);
+}
+
+/* ---------- données : une page par table */
+
+.donnees-cartes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.donnees-carte {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 16px;
+  height: 100%;
+  padding: 18px 20px;
+  border-radius: var(--rayon-carte);
+  background: var(--surface);
+  border: 1px solid rgba(58, 52, 42, 0.8);
+  color: var(--texte);
+  transition: border-color 0.15s var(--standard);
+}
+
+.donnees-carte:hover {
+  border-color: var(--or);
+}
+
+.donnees-carte__titre {
+  font-family: var(--police-titre);
+  font-size: 22px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.donnees-carte__nombre {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+  color: var(--or);
+  font-family: var(--police-titre);
+  font-size: 30px;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+}
+
+.donnees-carte__texte {
+  color: var(--texte-doux);
+  font-size: 14px;
+}
+
+.donnees-carte__pied {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--texte-doux);
+  font-size: 12px;
+}
+
+.tableau-defilant {
+  overflow-x: auto;
+  border: 1px solid rgba(58, 52, 42, 0.8);
+  border-radius: var(--rayon-carte);
+}
+
+.tableau--donnees {
+  font-size: 14px;
+}
+
+.tableau--donnees th,
+.tableau--donnees td {
+  white-space: nowrap;
+}
+
+.tableau--donnees td {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tableau--donnees a {
+  color: var(--or);
+}
+
+.fil {
+  margin: 0;
+  color: var(--texte-doux);
+  font-size: 14px;
+}
+
+.fil a {
+  color: var(--or);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  color: var(--texte-doux);
+}
+
+.detail {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  border: 1px solid rgba(58, 52, 42, 0.8);
+  border-radius: var(--rayon-carte);
+  background: rgba(58, 52, 42, 0.8);
+  overflow: hidden;
+}
+
+.detail > div {
+  display: grid;
+  gap: 4px 24px;
+  padding: 12px 16px;
+  background: var(--surface);
+}
+
+@media (min-width: 700px) {
+  .detail > div {
+    grid-template-columns: 240px 1fr;
+  }
+}
+
+.detail dt {
+  color: var(--texte-doux);
+  font-family: var(--police-titre);
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.detail__type {
+  margin-left: 8px;
+  font-family: var(--police-texte);
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0.7;
+}
+
+.detail dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.detail dd a {
+  color: var(--or);
 }

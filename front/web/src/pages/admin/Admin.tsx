@@ -7,6 +7,7 @@ import { useSession } from '../../session.ts'
 import Billets from './Billets.tsx'
 import { AdminContexte } from './contexte.ts'
 import Controles from './Controles.tsx'
+import Donnees from './Donnees.tsx'
 import Parametres from './Parametres.tsx'
 import Programmation from './Programmation.tsx'
 import Remplissage from './Remplissage.tsx'
@@ -18,6 +19,7 @@ const RUBRIQUES = [
   { chemin: '/admin/tarifs', libelle: 'Tarifs' },
   { chemin: '/admin/billets', libelle: 'Billets' },
   { chemin: '/admin/controles', libelle: 'Contrôles' },
+  { chemin: '/admin/donnees', libelle: 'Données' },
   { chemin: '/admin/parametres', libelle: 'Paramètres' },
 ]
 
@@ -74,6 +76,7 @@ export default function Admin() {
           <Route path="tarifs" element={<Tarifs />} />
           <Route path="billets" element={<Billets />} />
           <Route path="controles" element={<Controles />} />
+          <Route path="donnees/*" element={<Donnees />} />
           <Route path="parametres" element={<Parametres />} />
         </Routes>
       </div>
