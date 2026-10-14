@@ -38,5 +38,5 @@ en cas d'échec du job `cluster`, suppression du cluster à la fin quoi qu'il ar
 - `actionlint` (analyseur statique de workflows) : aucune erreur.
 - Les étapes des jobs `charte` et `cluster` ont été **rejouées localement** dans les mêmes conditions : `helm lint` de la charte avec les 14 jeux de valeurs (0 échec), kubeconform sur les manifests rendus (toutes les ressources valides),
   création du cluster avec `kind-creer.sh`, installation de la charte, `helm test` (Succeeded), parcours complet (tout passe), redémarrage progressif sous charge d'écriture (504 tours, 0 erreur), isolation réseau (fermée).
-- Le workflow lui-même n'a pas pu être exécuté sur GitHub depuis ce poste (aucune publication n'a été faite) : l'intégration réelle (permissions de `ghcr.io`, environnement `cours`) reste à constater au premier `push`.
-- Le job `tests` repose sur le profil `tests` de `docker-compose.yml` (vérifié en local pour qr-verifier).
+- Exécution réelle sur GitHub le 14/10/2026 ([exécution 38574635616](https://github.com/aztrooow/projet_architecture_web/actions/runs/38574635616), 9 min 41 s) : tests back, front, qr-generator et qr-verifier, charte Helm, cluster kind (installation, parcours, mise à jour) et publication des images sur `ghcr.io` : tous en succès. Le déploiement sur le cluster du cours (manuel) n'a pas été lancé.
+- Le job `tests` repose sur le profil `tests` de `docker-compose.yml`.
