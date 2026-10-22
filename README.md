@@ -1,5 +1,7 @@
 # CinetINT, billetterie en ligne du cinéma d'Évry
 
+##Groupe 6
+
 Projet d'architecture web, FISA 2028 (Télécom SudParis, septembre 2026).
 Groupe **CinetINT** : [@aztrooow](https://github.com/aztrooow), [@Adurnea](https://github.com/Adurnea), [@eldertek](https://github.com/eldertek).
 
